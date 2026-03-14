@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClawShield Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-brand">
+      <span class="shield-icon">🛡</span>
+      <span>ClawShield</span>
+      <span id="conn-dot" class="connection-dot" title="SSE connection"></span>
+    </div>
+
+    <div class="header-stats">
+      <div class="stat-pill total">
+        <span>Events</span>
+        <span id="count-total" class="count">0</span>
+      </div>
+      <div class="stat-pill threats">
+        <span>⚠ Threats</span>
+        <span id="count-threats" class="count">0</span>
+      </div>
+      <div class="stat-pill blocked">
+        <span>🚫 Blocked</span>
+        <span id="count-blocked" class="count">0</span>
+      </div>
+      <div class="stat-pill tools">
+        <span>🔧 Tools</span>
+        <span id="count-tools" class="count">0</span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button id="block-btn" class="btn danger" title="Toggle injection blocking">🔓 Block OFF</button>
+      <button id="clear-btn" class="btn" title="Clear event feed">Clear</button>
+      <a href="/wizard-page" class="btn primary" style="text-decoration:none">Setup Wizard</a>
+    </div>
+  </header>
+
+  <!-- Left panel: Event feed -->
+  <section class="panel-left">
+    <div class="panel-title">
+      <span>Security Events</span>
+      <span style="font-size:10px;font-weight:400">Live · last 200</span>
+    </div>
+    <div id="event-feed" class="event-feed">
+      <div class="empty-state">
+        <div class="icon">🛡</div>
+        <p>Waiting for events…</p>
+        <p style="margin-top:8px">Send a message in the chat to see activity</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Right panel: Status + Chat + LLM log -->
+  <section class="panel-right">
+
+    <!-- Status bar -->
+    <div class="status-bar">
+      <span>Mode:</span>
+      <span id="mode-badge" class="status-badge builtin">Built-in Engine</span>
+      <span style="margin-left:auto;font-size:11px">
+        Send a message with "fetch https://..." to trigger injection scanning
+      </span>
+    </div>
+
+    <!-- Chat panel -->
+    <div class="chat-panel">
+      <div id="chat-messages" class="chat-messages">
+        <div class="message assistant">
+          👋 Hi! I'm your ClawShield-protected agent. Try asking me to fetch a URL, read a file, or just chat. Watch the security events panel on the left as I work.
+        </div>
+      </div>
+
+      <div class="chat-input-row">
+        <textarea
+          id="chat-input"
+          class="chat-input"
+          placeholder="Send a message… (Enter to send, Shift+Enter for newline)"
+          rows="1"
+        ></textarea>
+        <button id="send-btn" class="send-btn">Send</button>
+      </div>
+    </div>
+
+    <!-- LLM request log -->
+    <div class="llm-log">
+      <div class="llm-log-title">LLM Request Log</div>
+      <div id="llm-log-entries">
+        <div style="color:var(--text-muted);font-size:11px">No requests yet</div>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

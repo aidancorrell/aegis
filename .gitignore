@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+clawshield.env
+!clawshield.env.example
+dist/
+*.egg-info/
+.pytest_cache/
+audit/
+workspace/
+data/
