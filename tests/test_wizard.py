@@ -1,11 +1,11 @@
-"""Unit tests for clawshield.wizard."""
+"""Unit tests for aegis.wizard."""
 
 import pytest
 import httpx
 from httpx import ASGITransport
 from fastapi import FastAPI
 
-from clawshield.wizard import (
+from aegis.wizard import (
     router as wizard_router,
     _default_extra_hosts,
     _generate_compose,
@@ -112,7 +112,7 @@ class TestWizardEndpoints:
         assert resp.json()["valid"] is True
 
     @pytest.mark.asyncio
-    async def test_generate_mako_anthropic_real_key_in_clawshield_env(self):
+    async def test_generate_mako_anthropic_real_key_in_aegis_env(self):
         payload = {
             "agent_name": "mako",
             "llm_provider": "anthropic",
@@ -124,7 +124,7 @@ class TestWizardEndpoints:
             resp = await client.post("/wizard/generate", json=payload)
         assert resp.status_code == 200
         data = resp.json()
-        assert "sk-ant-realkey123456789" in data["clawshield_env"]
+        assert "sk-ant-realkey123456789" in data["aegis_env"]
 
     @pytest.mark.asyncio
     async def test_generate_mako_anthropic_dummy_key_in_agent_env(self):
@@ -138,7 +138,7 @@ class TestWizardEndpoints:
         ) as client:
             resp = await client.post("/wizard/generate", json=payload)
         data = resp.json()
-        assert "DUMMY_KEY_INTERCEPTED_BY_CLAWSHIELD" in data["agent_env"]
+        assert "DUMMY_KEY_INTERCEPTED_BY_AEGIS" in data["agent_env"]
 
     @pytest.mark.asyncio
     async def test_generate_mako_anthropic_base_url_in_agent_env(self):

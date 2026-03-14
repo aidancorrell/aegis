@@ -136,7 +136,7 @@ def _apply_seatbelt() -> tuple[bool, str]:
     """Apply macOS Seatbelt via sandbox_init(). Returns (success, reason)."""
     # "no-write-except-temporary": kernel-blocks all writes outside /tmp.
     # Reads and network are unrestricted — Python stdlib and API calls work fine.
-    # Works for ClawShield because the local workspace lives in /tmp.
+    # Works for Aegis because the local workspace lives in /tmp.
     _PROFILE = b"no-write-except-temporary"
 
     try:

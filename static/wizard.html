@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ClawShield Setup Wizard</title>
+  <title>Aegis Setup Wizard</title>
   <link rel="stylesheet" href="/static/style.css">
   <style>
     body { overflow: auto; }
@@ -161,7 +161,7 @@
 
   <div class="wizard-header">
     <div style="font-size:48px;margin-bottom:12px">🛡</div>
-    <h1>ClawShield Setup</h1>
+    <h1>Aegis Setup</h1>
     <p>Wrap Mako with security and real-time monitoring in minutes</p>
   </div>
 
@@ -180,7 +180,7 @@
   <div class="step active" id="step-1">
     <div class="wizard-card">
       <h2>Choose agent</h2>
-      <p class="subtitle">Select the OpenClaw-compatible agent ClawShield will wrap</p>
+      <p class="subtitle">Select the OpenClaw-compatible agent Aegis will wrap</p>
 
       <div class="agent-grid" id="agent-list">
         <!-- populated by JS -->
@@ -197,10 +197,10 @@
   <div class="step" id="step-2">
     <div class="wizard-card">
       <h2>API Keys</h2>
-      <p class="subtitle">Your real API keys are stored only in clawshield.env — never inside the agent container.</p>
+      <p class="subtitle">Your real API keys are stored only in aegis.env — never inside the agent container.</p>
 
       <div class="info-box">
-        <strong>How it works:</strong> ClawShield intercepts the agent's LLM calls via DNS override. The agent gets a dummy key; ClawShield substitutes the real one before forwarding to the provider.
+        <strong>How it works:</strong> Aegis intercepts the agent's LLM calls via DNS override. The agent gets a dummy key; Aegis substitutes the real one before forwarding to the provider.
       </div>
 
       <div class="form-group">
@@ -215,7 +215,7 @@
       <div class="form-group">
         <label class="form-label">API Key</label>
         <input type="password" id="a-api-key" placeholder="Paste your API key here">
-        <div class="form-hint">Stored in clawshield.env on the host. Never touches the agent container.</div>
+        <div class="form-hint">Stored in aegis.env on the host. Never touches the agent container.</div>
       </div>
     </div>
 
@@ -229,7 +229,7 @@
   <div class="step" id="step-3">
     <div class="wizard-card">
       <h2>Bot Channels</h2>
-      <p class="subtitle">The ClawShield dashboard is always at http://localhost:8000. Optionally add Telegram or Discord.</p>
+      <p class="subtitle">The Aegis dashboard is always at http://localhost:8000. Optionally add Telegram or Discord.</p>
 
       <div class="form-group">
         <label class="form-label">Telegram Bot Token <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
@@ -347,7 +347,7 @@ async function generateConfig() {
 
     let html = `<div class="success-banner">✓ Configuration generated!</div>`;
 
-    html += outputBlock('clawshield.env', 'cs-env', data.clawshield_env);
+    html += outputBlock('aegis.env', 'cs-env', data.aegis_env);
     html += outputBlock('agent.env', 'agent-env', data.agent_env);
     html += outputBlock('docker-compose.yml', 'compose', data.compose_content);
 

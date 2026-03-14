@@ -4,8 +4,10 @@ __pycache__/
 *.pyo
 .env
 clawshield.env
+aegis.env
 agent.env
 !clawshield.env.example
+!aegis.env.example
 !agent.env.example
 dist/
 *.egg-info/
@@ -13,5 +15,6 @@ dist/
 audit/
 workspace/
 data/
+frontend/node_modules/
 .claude/worktrees
 .claude/settings.local.json

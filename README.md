@@ -1,8 +1,8 @@
-# ClawShield 🛡
+# Aegis 🛡
 
 **Real-time security layer for AI agents. Wraps Mako (or any OpenClaw-compatible agent) from the outside — no source changes required.**
 
-ClawShield intercepts every LLM call your agent makes, scans it for attacks, and streams the results to a live dashboard. If a malicious webpage tries to hijack your agent mid-task ([ClawJacked](https://www.wired.com/story/claude-claude-mcp-prompt-injection/)), ClawShield catches and blocks it before the LLM ever sees it.
+Aegis intercepts every LLM call your agent makes, scans it for attacks, and streams the results to a live dashboard. If a malicious webpage tries to hijack your agent mid-task ([ClawJacked](https://www.wired.com/story/claude-claude-mcp-prompt-injection/)), Aegis catches and blocks it before the LLM ever sees it.
 
 ---
 
@@ -13,7 +13,7 @@ ClawShield intercepts every LLM call your agent makes, scans it for attacks, and
 │  Your computer / server                                             │
 │                                                                     │
 │  ┌───────────────────────────────────────────────────────────────┐  │
-│  │  clawshield container                                         │  │
+│  │  aegis container                                         │  │
 │  │                                                               │  │
 │  │   ┌─────────────┐   ┌──────────────┐   ┌──────────────────┐  │  │
 │  │   │  LLM Proxy  │   │  Event Bus   │   │   Dashboard UI   │  │  │
@@ -40,12 +40,12 @@ ClawShield intercepts every LLM call your agent makes, scans it for attacks, and
 │  │  Telegram / Discord / CLI  →  ReAct loop  →  Tools           │  │
 │  │                                                               │  │
 │  │  audit.log ──────────────────────────────────────────────▶   │  │
-│  │            (shared volume, read by ClawShield log adapter)    │  │
+│  │            (shared volume, read by Aegis log adapter)    │  │
 │  └───────────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**How the intercept works:** `ANTHROPIC_BASE_URL=http://clawshield:8000/proxy/anthropic` in the agent's environment causes the Anthropic SDK to route all API calls through ClawShield. ClawShield scans the request, strips the dummy API key, injects the real key, and forwards to Anthropic. The agent never touches the real key — it's held only by ClawShield.
+**How the intercept works:** `ANTHROPIC_BASE_URL=http://aegis:8000/proxy/anthropic` in the agent's environment causes the Anthropic SDK to route all API calls through Aegis. Aegis scans the request, strips the dummy API key, injects the real key, and forwards to Anthropic. The agent never touches the real key — it's held only by Aegis.
 
 ---
 
@@ -62,7 +62,7 @@ Every message in every LLM request is scanned for prompt injection patterns befo
 - Token-style injections: `<|system|>`, `[[...]]`, `ASSISTANT:`
 - Exfiltration attempts: `send to`, `post to`, `upload to`
 
-**When blocking is enabled** (`CLAWSHIELD_BLOCK_INJECTIONS=true`), the poisoned tool result is replaced with `[BLOCKED: prompt injection detected by ClawShield]` before the request is forwarded. The LLM never sees the attack payload.
+**When blocking is enabled** (`AEGIS_BLOCK_INJECTIONS=true`), the poisoned tool result is replaced with `[BLOCKED: prompt injection detected by Aegis]` before the request is forwarded. The LLM never sees the attack payload.
 
 ### Layer 2 — Credential Leak Detection
 
@@ -81,7 +81,7 @@ A `CREDENTIAL_LEAK` event fires in the dashboard on any match.
 
 ### Layer 3 — API Key Isolation
 
-The agent container holds only a dummy API key (`DUMMY_KEY_INTERCEPTED_BY_CLAWSHIELD`). ClawShield strips it and injects the real key on every forwarded request. **Even if the agent is fully compromised, it cannot make direct LLM API calls** — it has no valid credentials.
+The agent container holds only a dummy API key (`DUMMY_KEY_INTERCEPTED_BY_AEGIS`). Aegis strips it and injects the real key on every forwarded request. **Even if the agent is fully compromised, it cannot make direct LLM API calls** — it has no valid credentials.
 
 ### Layer 4 — Kernel Hardening
 
@@ -89,7 +89,7 @@ Applied once at startup via `hardening.py`:
 
 | Platform | Mechanism | Effect |
 |---|---|---|
-| Linux / Docker | **Landlock** (kernel 5.13+) | OS-level rule: process may only write to `/tmp`. Even a bug in ClawShield's own code cannot write outside this boundary. |
+| Linux / Docker | **Landlock** (kernel 5.13+) | OS-level rule: process may only write to `/tmp`. Even a bug in Aegis's own code cannot write outside this boundary. |
 | macOS (native) | **Seatbelt** `sandbox_init()` | `no-write-except-temporary` profile — kernel blocks all writes outside `/tmp`. |
 
 Both are implemented via `ctypes` syscalls with graceful fallback if unavailable.
@@ -136,11 +136,11 @@ Every security event is emitted to an SSE stream (`/events`) and rendered live i
 ### Setup
 
 ```bash
-git clone https://github.com/aidancorrell/clawshield
-cd clawshield
+git clone https://github.com/aidancorrell/aegis
+cd aegis
 
-cp clawshield.env.example clawshield.env
-# Edit clawshield.env — set CLAWSHIELD_REAL_ANTHROPIC_API_KEY
+cp aegis.env.example aegis.env
+# Edit aegis.env — set AEGIS_REAL_ANTHROPIC_API_KEY
 
 cp agent.env.example agent.env
 # Edit agent.env — set MAKO_TELEGRAM_BOT_TOKEN + MAKO_TELEGRAM_ALLOWED_CHAT_IDS_STR
@@ -175,9 +175,9 @@ Open `http://localhost:8000` — dashboard is live.
 ## Project Structure
 
 ```
-src/clawshield/
+src/aegis/
 ├── main.py          # FastAPI app, startup, routes
-├── config.py        # Pydantic settings (CLAWSHIELD_* env vars)
+├── config.py        # Pydantic settings (AEGIS_* env vars)
 ├── proxy.py         # LLM API proxy — OpenAI, Anthropic, Gemini
 ├── scanner.py       # Injection + credential leak detection
 ├── events.py        # SecurityEventBus — asyncio SSE stream
@@ -203,7 +203,7 @@ docker-compose.dev.yml  # Dev stack with hot reload + local Mako build
 
 ## Roadmap
 
-- [ ] **Agent Builder** — build a personal AI assistant entirely through the ClawShield UI, no Mako knowledge required. See [`docs/agent-builder.md`](docs/agent-builder.md).
+- [ ] **Agent Builder** — build a personal AI assistant entirely through the Aegis UI, no Mako knowledge required. See [`docs/agent-builder.md`](docs/agent-builder.md).
 - [ ] **Gemini proxy support** — TLS termination for providers that don't support `base_url` override
 - [ ] **`install.sh`** — `curl | bash` bootstrap that pulls images and opens the wizard
 - [ ] **VPS deploy** — wizard generates SSH deploy commands for remote servers

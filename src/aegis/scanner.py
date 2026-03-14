@@ -29,6 +29,13 @@ _INJECTION_PATTERNS = [
     re.compile(r"\bASSISTANT:\s"),
     re.compile(r"\bUSER:\s"),
     re.compile(r"\bHUMAN:\s"),
+    # Override / hijack framing
+    re.compile(r"\bsystem\s+override\b", re.I),
+    re.compile(r"\bagent\s+instruction\b", re.I),
+    re.compile(r"\bmaintenance\s+mode\b", re.I),
+    re.compile(r"\burgent\s+message\s+from\s+your\s+developer\b", re.I),
+    re.compile(r"\bdo\s+not\s+inform\s+the\s+user\b", re.I),
+    re.compile(r"\bbackground\s+diagnostic\b", re.I),
     # Token-style wrappers
     re.compile(r"\[\[.*?\]\]"),
     re.compile(r"<\|.*?\|>"),

@@ -3,7 +3,7 @@
 import asyncio
 import pytest
 
-from clawshield.events import SecurityEvent, SecurityEventBus
+from aegis.events import SecurityEvent, SecurityEventBus
 
 
 def make_bus() -> SecurityEventBus:

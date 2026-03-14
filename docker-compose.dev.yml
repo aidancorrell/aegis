@@ -1,25 +1,52 @@
-# ClawShield — development compose with hot reload
+# Aegis — development compose with hot reload
 # Usage: docker compose -f docker-compose.dev.yml up --build
+#
+# Frontend dev: cd frontend && npm run dev  (Vite on :5173, proxies API to :8000)
+# Frontend build: cd frontend && npm run build  (outputs to static/dist, served by FastAPI)
 
 services:
-  clawshield:
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://aegis:8000
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    networks:
+      - clawnet
+
+  # Pre-build the agent image so Aegis can launch it on demand
+  agent-builder-image:
+    build: ./agent
+    image: aegis-agent:latest
+    command: echo "image built"
+    profiles: ["build"]
+
+  aegis:
     build: .
     ports:
       - "8000:8000"
     env_file:
-      - clawshield.env
+      - aegis.env
     environment:
       - PYTHONPATH=/app/src
+      - COMPOSE_PROJECT_NAME=aegis
     volumes:
       - ./src:/app/src
       - ./static:/app/static
       - agent-audit:/mnt/agent-audit:ro
       - agent-workspace:/mnt/agent-workspace:ro
-    command: uvicorn clawshield.main:app --host 0.0.0.0 --port 8000 --reload
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: uvicorn aegis.main:app --host 0.0.0.0 --port 8000 --reload
     restart: unless-stopped
     networks:
       - clawnet
 
+  # Mako agent (Mode A — comment out if using agent-builder below)
   agent:
     build: ../mako
     env_file:
@@ -27,8 +54,7 @@ services:
     volumes:
       - agent-audit:/app/audit
       - agent-workspace:/app/workspace
-    # CLI mode — no Telegram/Discord needed for dev testing.
-    # Use: docker attach clawshield-agent-1  (then type messages)
+      - ./demo:/app/workspace/demo:ro
     entrypoint: ["python", "-m", "mako.main", "--telegram"]
     stdin_open: true
     tty: true
@@ -36,7 +62,25 @@ services:
     networks:
       - clawnet
     depends_on:
-      - clawshield
+      - aegis
+
+  # aegis-agent (Mode B — comment out 'agent' above and use this for agent-builder testing)
+  # agent-builder:
+  #   build: ./agent
+  #   environment:
+  #     - ANTHROPIC_BASE_URL=http://aegis:8000/proxy/anthropic
+  #     - ANTHROPIC_API_KEY=DUMMY_KEY_INTERCEPTED_BY_AEGIS
+  #     - AGENT_CONFIG_PATH=/app/agent_config.json
+  #   volumes:
+  #     - ./agent_config.json:/app/agent_config.json:ro
+  #     - agent-audit:/app/audit
+  #     - agent-workspace:/app/workspace
+  #   ports:
+  #     - "8001:8001"
+  #   networks:
+  #     - clawnet
+  #   depends_on:
+  #     - aegis
 
 networks:
   clawnet:

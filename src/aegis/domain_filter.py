@@ -1,6 +1,6 @@
 """Domain allow/block filtering for outbound web requests.
 
-Two modes (controlled by CLAWSHIELD_DOMAIN_FILTER_MODE):
+Two modes (controlled by AEGIS_DOMAIN_FILTER_MODE):
 
   blacklist  — allow all domains except those listed in domain_blacklist (default)
   whitelist  — block all domains except those listed in domain_whitelist
@@ -8,10 +8,10 @@ Two modes (controlled by CLAWSHIELD_DOMAIN_FILTER_MODE):
 Domains are matched exactly or as a suffix (e.g. "openai.com" also matches
 "api.openai.com"). Matching is case-insensitive.
 
-Configure via clawshield.env:
-  CLAWSHIELD_DOMAIN_FILTER_MODE=whitelist
-  CLAWSHIELD_DOMAIN_WHITELIST=api.openai.com,api.anthropic.com,generativelanguage.googleapis.com
-  CLAWSHIELD_DOMAIN_BLACKLIST=evil.com,exfil.io
+Configure via aegis.env:
+  AEGIS_DOMAIN_FILTER_MODE=whitelist
+  AEGIS_DOMAIN_WHITELIST=api.openai.com,api.anthropic.com,generativelanguage.googleapis.com
+  AEGIS_DOMAIN_BLACKLIST=evil.com,exfil.io
 """
 
 from urllib.parse import urlparse

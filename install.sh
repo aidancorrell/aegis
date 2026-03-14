@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# ClawShield bootstrap — curl -fsSL https://clawshield.dev/install | bash
+# Aegis bootstrap — curl -fsSL https://aegis.dev/install | bash
 set -euo pipefail
 
-CLAWSHIELD_DIR="${CLAWSHIELD_DIR:-$HOME/clawshield}"
-PORT="${CLAWSHIELD_PORT:-8000}"
+AEGIS_DIR="${AEGIS_DIR:-$HOME/aegis}"
+PORT="${AEGIS_PORT:-8000}"
 
-echo "🛡  ClawShield Installer"
+echo "🛡  Aegis Installer"
 echo "========================"
 echo ""
 
@@ -25,17 +25,17 @@ fi
 echo "✓ Dependencies OK"
 
 # Create working directory
-mkdir -p "$CLAWSHIELD_DIR"
-cd "$CLAWSHIELD_DIR"
+mkdir -p "$AEGIS_DIR"
+cd "$AEGIS_DIR"
 
 # Write docker-compose.yml
 cat > docker-compose.yml << 'COMPOSE'
 services:
-  clawshield:
-    image: ghcr.io/clawshield/clawshield:latest
+  aegis:
+    image: ghcr.io/aegis/aegis:latest
     ports:
       - "8000:8000"
-    env_file: clawshield.env
+    env_file: aegis.env
     volumes:
       - ./agent_config.json:/app/agent_config.json:ro
       - agent-workspace:/app/workspace
@@ -56,9 +56,9 @@ volumes:
 COMPOSE
 
 # Write default env
-cat > clawshield.env << 'ENV'
-CLAWSHIELD_MODE=builtin
-CLAWSHIELD_BLOCK_INJECTIONS=false
+cat > aegis.env << 'ENV'
+AEGIS_MODE=builtin
+AEGIS_BLOCK_INJECTIONS=false
 ENV
 
 # Write default agent config (user will fill in API key via wizard)
@@ -75,16 +75,16 @@ cat > agent_config.json << 'AGENTCONFIG'
 AGENTCONFIG
 
 echo ""
-echo "📁 ClawShield directory: $CLAWSHIELD_DIR"
+echo "📁 Aegis directory: $AEGIS_DIR"
 echo ""
 
 # Start the container
-echo "🚀 Starting ClawShield..."
+echo "🚀 Starting Aegis..."
 docker compose pull --quiet 2>/dev/null || true
 docker compose up -d
 
 echo ""
-echo "✓ ClawShield is running!"
+echo "✓ Aegis is running!"
 echo ""
 echo "  Dashboard:   http://localhost:${PORT}"
 echo "  Setup Wizard: http://localhost:${PORT}/wizard-page"
