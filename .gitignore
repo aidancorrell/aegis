@@ -13,3 +13,4 @@ dist/
 audit/
 workspace/
 data/
+.claude/worktrees
