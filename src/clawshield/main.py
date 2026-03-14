@@ -74,12 +74,12 @@ async def events(request: Request) -> StreamingResponse:
     """SSE endpoint — streams SecurityEvents to all connected dashboard tabs."""
 
     async def generate():
-        yield f"data: {json.dumps({'type': 'PING', 'severity': 'info', 'data': {}, 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})}\\n\\n"
+        yield "data: " + json.dumps({'type': 'PING', 'severity': 'info', 'data': {}, 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}) + "\n\n"
         async for event in bus.subscribe():
             if await request.is_disconnected():
                 break
             from dataclasses import asdict
-            yield f"data: {json.dumps(asdict(event))}\\n\\n"
+            yield "data: " + json.dumps(asdict(event)) + "\n\n"
 
     return StreamingResponse(
         generate(),
