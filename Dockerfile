@@ -16,8 +16,8 @@ FROM python:3.12-slim
 ARG UID=1000
 ARG GID=1000
 
-RUN groupadd -g ${GID} clawshield && \
-    useradd -u ${UID} -g ${GID} -s /bin/sh -m clawshield
+RUN groupadd -g ${GID} aegis && \
+    useradd -u ${UID} -g ${GID} -s /bin/sh -m aegis
 
 WORKDIR /app
 
@@ -29,10 +29,10 @@ COPY static/ ./static/
 
 # Create workspace and audit dirs
 RUN mkdir -p /app/workspace /app/audit && \
-    chown -R clawshield:clawshield /app
+    chown -R aegis:aegis /app
 
-USER clawshield
+USER aegis
 
 EXPOSE 8000
 
-CMD ["uvicorn", "clawshield.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]
+CMD ["uvicorn", "aegis.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

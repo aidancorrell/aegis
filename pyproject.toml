@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "clawshield"
+name = "aegis"
 version = "1.0.0"
 description = "Agent-agnostic security and deployment platform for OpenClaw-compatible agents"
 requires-python = ">=3.12"
@@ -15,6 +15,7 @@ dependencies = [
     "pydantic>=2.0",
     "pydantic-settings>=2.0",
     "python-multipart>=0.0.9",
+    "docker>=7.0",
 ]
 
 [project.optional-dependencies]
@@ -24,11 +25,11 @@ dev = [
 ]
 
 [project.scripts]
-clawshield = "clawshield.main:app"
+aegis = "aegis.main:app"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/clawshield"]
+packages = ["src/aegis"]

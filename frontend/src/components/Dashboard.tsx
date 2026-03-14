@@ -3,6 +3,7 @@ import { Header } from './Header'
 import { EventFeed } from './EventFeed'
 import { ActivityLog } from './ActivityLog'
 import { Chat } from './Chat'
+import { ThreatToasts, useThreatToasts } from './ThreatToast'
 import { useSSE } from '../hooks/useSSE'
 import type { Stats } from '../types'
 
@@ -14,6 +15,7 @@ export function Dashboard() {
   const [blockMode, setBlockMode] = useState(true)
   const [rightTab, setRightTab] = useState<RightTab>('activity')
   const [agentOnline, setAgentOnline] = useState(false)
+  const { toasts, dismiss } = useThreatToasts(events)
 
   useEffect(() => {
     fetch('/stats')
@@ -38,6 +40,7 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col h-screen bg-bg text-text font-sans overflow-hidden">
+      <ThreatToasts toasts={toasts} onDismiss={dismiss} />
       <Header
         connected={connected}
         stats={stats}

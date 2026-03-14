@@ -1,4 +1,4 @@
-"""Web chat endpoint for the clawshield-agent runtime."""
+"""Web chat endpoint for the aegis-agent runtime."""
 
 import anthropic
 from fastapi import FastAPI

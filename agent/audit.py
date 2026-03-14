@@ -1,6 +1,6 @@
 """Audit log writer — writes tool call entries in Mako's JSON-lines format.
 
-Format understood by ClawShield's log_adapter.py:
+Format understood by Aegis's log_adapter.py:
   {"timestamp": "...", "tool": "...", "args": {...}, "result": "...", "error": "..."}
 """
 

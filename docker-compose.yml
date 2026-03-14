@@ -1,14 +1,14 @@
-# ClawShield — production two-container stack
-# ClawShield intercepts Mako's LLM traffic via DNS override
+# Aegis — production two-container stack
+# Aegis intercepts Mako's LLM traffic via DNS override
 # Run: docker compose up -d
 
 services:
-  clawshield:
+  aegis:
     build: .
     ports:
       - "8000:8000"
     env_file:
-      - clawshield.env
+      - aegis.env
     volumes:
       - agent-audit:/mnt/agent-audit:ro
       - agent-workspace:/mnt/agent-workspace:ro
@@ -30,7 +30,7 @@ services:
     image: ghcr.io/aidancorrell/mako:latest
     env_file:
       - agent.env
-    # ANTHROPIC_BASE_URL in agent.env routes SDK traffic through ClawShield proxy.
+    # ANTHROPIC_BASE_URL in agent.env routes SDK traffic through Aegis proxy.
     # For Gemini (hardcoded httpx URL), DNS override + TLS termination would be
     # needed — not yet implemented. Use Anthropic provider for full interception.
     volumes:
@@ -48,7 +48,7 @@ services:
     networks:
       - clawnet
     depends_on:
-      - clawshield
+      - aegis
 
 networks:
   clawnet:

@@ -1,9 +1,9 @@
-"""clawshield-agent — minimal secure agent runtime.
+"""aegis-agent — minimal secure agent runtime.
 
 Reads agent_config.json, starts the LLM client, and launches channels
 (web chat always on, Telegram optional).
 
-All LLM calls route through ClawShield proxy via ANTHROPIC_BASE_URL env var.
+All LLM calls route through Aegis proxy via ANTHROPIC_BASE_URL env var.
 All tool calls are logged to /app/audit/audit.log (shared volume).
 """
 
@@ -28,6 +28,10 @@ CONFIG_PATH = Path(os.getenv("AGENT_CONFIG_PATH", "/app/agent_config.json"))
 
 
 def load_config() -> dict:
+    # Prefer inline JSON env var (set by Aegis launcher) over file
+    inline = os.getenv("AGENT_CONFIG_JSON")
+    if inline:
+        return json.loads(inline)
     if not CONFIG_PATH.exists():
         raise RuntimeError(f"agent_config.json not found at {CONFIG_PATH}")
     return json.loads(CONFIG_PATH.read_text())
@@ -82,7 +86,7 @@ async def main() -> None:
     config = load_config()
     logger.info("Starting agent: %s (provider=%s, model=%s)", config["name"], config["provider"], config["model"])
 
-    # The Anthropic SDK reads ANTHROPIC_BASE_URL from env — pointing to ClawShield proxy
+    # The Anthropic SDK reads ANTHROPIC_BASE_URL from env — pointing to Aegis proxy
     client = anthropic.AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY", "DUMMY"))
 
     app = build_app(config, client)

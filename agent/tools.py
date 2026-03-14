@@ -1,4 +1,4 @@
-"""Tool implementations for the clawshield-agent runtime.
+"""Tool implementations for the aegis-agent runtime.
 
 All tools are intentionally restrictive:
 - web_fetch: HTTPS-only, blocks private/local IPs (SSRF protection)
@@ -76,7 +76,7 @@ async def web_fetch(url: str) -> str:
 
     try:
         async with httpx.AsyncClient(timeout=15, follow_redirects=True, max_redirects=3) as client:
-            resp = await client.get(url, headers={"User-Agent": "ClawShield-Agent/1.0"})
+            resp = await client.get(url, headers={"User-Agent": "Aegis-Agent/1.0"})
         text = resp.text[:8000]  # cap at 8KB
         log_tool_call("web_fetch", {"url": url}, f"HTTP {resp.status_code}, {len(text)} chars")
         return text
