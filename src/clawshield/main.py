@@ -6,8 +6,9 @@ import logging
 import time
 from pathlib import Path
 
+import httpx
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, Response, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import load_settings
@@ -28,10 +29,10 @@ settings = load_settings()
 app.include_router(wizard_router)
 app.include_router(create_proxy_router(settings))
 
-# Serve static files
-_static_dir = Path(__file__).parent.parent.parent / "static"
-if _static_dir.exists():
-    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+# Serve React build assets (Vite outputs to static/dist/assets)
+_dist_dir = Path(__file__).parent.parent.parent / "static" / "dist"
+if _dist_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(_dist_dir / "assets")), name="assets")
 
 
 @app.on_event("startup")
@@ -51,22 +52,23 @@ async def startup() -> None:
     ))
 
 
+def _react_index() -> HTMLResponse:
+    dist = Path(__file__).parent.parent.parent / "static" / "dist" / "index.html"
+    if dist.exists():
+        return HTMLResponse(dist.read_text())
+    return HTMLResponse(
+        "<h1>ClawShield</h1><p>Run <code>cd frontend && npm run build</code> to build the UI.</p>"
+    )
+
+
 @app.get("/", response_class=HTMLResponse)
 async def root() -> HTMLResponse:
-    static_dir = Path(__file__).parent.parent.parent / "static"
-    dashboard = static_dir / "dashboard.html"
-    if dashboard.exists():
-        return HTMLResponse(dashboard.read_text())
-    return HTMLResponse("<h1>ClawShield</h1><p>Static files not found.</p>")
+    return _react_index()
 
 
 @app.get("/wizard-page", response_class=HTMLResponse)
 async def wizard_page() -> HTMLResponse:
-    static_dir = Path(__file__).parent.parent.parent / "static"
-    wizard = static_dir / "wizard.html"
-    if wizard.exists():
-        return HTMLResponse(wizard.read_text())
-    return HTMLResponse("<h1>Wizard not found</h1>")
+    return _react_index()
 
 
 @app.get("/events")
@@ -108,6 +110,35 @@ async def stats() -> dict:
 async def hardening_status() -> dict:
     from dataclasses import asdict
     return asdict(hardening.status)
+
+
+_AGENT_BASE = "http://agent:8001"
+_STRIP = {"host", "content-length", "transfer-encoding", "connection"}
+
+
+@app.api_route("/agent-chat/{path:path}", methods=["GET", "POST"])
+async def agent_chat_proxy(request: Request, path: str) -> Response:
+    """Transparent proxy to the clawshield-agent web chat (port 8001)."""
+    url = f"{_AGENT_BASE}/{path}"
+    headers = {k: v for k, v in request.headers.items() if k.lower() not in _STRIP}
+    body = await request.body()
+    try:
+        async with httpx.AsyncClient(timeout=120) as client:
+            resp = await client.request(
+                method=request.method,
+                url=url,
+                params=dict(request.query_params),
+                headers=headers,
+                content=body,
+            )
+        return Response(
+            content=resp.content,
+            status_code=resp.status_code,
+            headers={k: v for k, v in resp.headers.items() if k.lower() not in {"content-encoding", "transfer-encoding"}},
+            media_type=resp.headers.get("content-type"),
+        )
+    except httpx.ConnectError:
+        return Response(content='{"error":"agent not running"}', status_code=503, media_type="application/json")
 
 
 @app.post("/settings/block-injections")
