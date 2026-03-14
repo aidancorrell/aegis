@@ -1,0 +1,45 @@
+# ClawShield — development compose with hot reload
+# Usage: docker compose -f docker-compose.dev.yml up --build
+
+services:
+  clawshield:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - clawshield.env
+    volumes:
+      - ./src:/app/src
+      - ./static:/app/static
+      - agent-audit:/mnt/agent-audit:ro
+      - agent-workspace:/mnt/agent-workspace:ro
+    command: uvicorn clawshield.main:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    networks:
+      - clawnet
+
+  agent:
+    build: ../mako
+    env_file:
+      - agent.env
+    volumes:
+      - agent-audit:/app/audit
+      - agent-workspace:/app/workspace
+    # CLI mode — no Telegram/Discord needed for dev testing.
+    # Use: docker attach clawshield-agent-1  (then type messages)
+    entrypoint: ["python", "-m", "mako.main", "--telegram"]
+    stdin_open: true
+    tty: true
+    restart: "no"
+    networks:
+      - clawnet
+    depends_on:
+      - clawshield
+
+networks:
+  clawnet:
+    driver: bridge
+
+volumes:
+  agent-audit:
+  agent-workspace:

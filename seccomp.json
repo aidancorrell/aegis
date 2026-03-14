@@ -1,0 +1,67 @@
+{
+  "defaultAction": "SCMP_ACT_ALLOW",
+  "architectures": ["SCMP_ARCH_X86_64", "SCMP_ARCH_AARCH64"],
+  "syscalls": [
+    {
+      "names": [
+        "ptrace",
+        "process_vm_readv",
+        "process_vm_writev",
+        "kexec_load",
+        "kexec_file_load",
+        "pivot_root",
+        "mount",
+        "umount2",
+        "swapon",
+        "swapoff",
+        "sysfs",
+        "acct",
+        "iopl",
+        "ioperm",
+        "init_module",
+        "finit_module",
+        "delete_module",
+        "settimeofday",
+        "adjtimex",
+        "clock_adjtime",
+        "clock_settime",
+        "stime",
+        "quotactl",
+        "nfsservctl",
+        "get_kernel_syms",
+        "afs_syscall",
+        "tuxcall",
+        "security",
+        "lookup_dcookie",
+        "perf_event_open",
+        "fanotify_init",
+        "open_by_handle_at",
+        "setns",
+        "kcmp",
+        "bpf",
+        "userfaultfd",
+        "pkey_mprotect",
+        "pkey_alloc",
+        "pkey_free",
+        "io_uring_setup",
+        "io_uring_enter",
+        "io_uring_register"
+      ],
+      "action": "SCMP_ACT_ERRNO",
+      "errnoRet": 1
+    },
+    {
+      "names": ["clone"],
+      "action": "SCMP_ACT_ERRNO",
+      "errnoRet": 1,
+      "args": [
+        {
+          "index": 0,
+          "value": 2114060288,
+          "op": "SCMP_CMP_MASKED_EQ",
+          "valueTwo": 2114060288
+        }
+      ]
+    }
+  ]
+}

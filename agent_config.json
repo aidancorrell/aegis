@@ -1,9 +1,0 @@
-{
-  "provider": "gemini",
-  "api_key": "",
-  "model": "gemini-2.5-flash",
-  "system_prompt": "You are a helpful assistant with access to the web. When asked to fetch URLs, do so using the web_fetch tool. Always be transparent about what you're doing.",
-  "tools": ["web_fetch"],
-  "allowed_commands": [],
-  "workspace_path": "/app/workspace"
-}

@@ -1,27 +1,25 @@
-// ClawShield Dashboard — SSE client, event rendering, chat
+// ClawShield Dashboard — SSE client, event rendering, proxy activity log
 
 const MAX_EVENTS = 200;
-const MAX_LLM_LOG = 20;
+const MAX_ACTIVITY = 50;
 
 let eventSource = null;
-let blockMode = false;
+let blockMode = true;
 let events = [];
-let llmLog = [];
+let activityLog = [];
 
 const counters = { total: 0, injection: 0, blocked: 0, tool_calls: 0 };
 
 // --- DOM refs ---
 const feed = document.getElementById('event-feed');
-const chatMessages = document.getElementById('chat-messages');
-const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-btn');
-const llmLogEl = document.getElementById('llm-log-entries');
+const activityEl = document.getElementById('activity-log');
 const connDot = document.getElementById('conn-dot');
 const countTotal = document.getElementById('count-total');
 const countThreats = document.getElementById('count-threats');
 const countBlocked = document.getElementById('count-blocked');
 const countTools = document.getElementById('count-tools');
 const blockBtn = document.getElementById('block-btn');
+const blockStatus = document.getElementById('block-status');
 const clearBtn = document.getElementById('clear-btn');
 
 // --- SSE ---
@@ -57,7 +55,7 @@ function handleEvent(ev) {
   renderEventCard(ev, true);
 
   if (ev.type === 'LLM_RESPONSE') {
-    addLlmLogEntry(ev);
+    addActivityEntry(ev);
   }
 }
 
@@ -83,11 +81,9 @@ const TYPE_LABELS = {
   INJECTION_BLOCKED: 'Injection Blocked',
   CREDENTIAL_LEAK: 'Credential Leak',
   RATE_LIMIT_HIT: 'Rate Limited',
-  PING: 'Ping',
 };
 
 function renderEventCard(ev, prepend = false) {
-  // Remove empty state if present
   const empty = feed.querySelector('.empty-state');
   if (empty) empty.remove();
 
@@ -147,85 +143,52 @@ function esc(s) {
     .replace(/"/g, '&quot;');
 }
 
-// --- LLM log ---
-function addLlmLogEntry(ev) {
+// --- Proxy activity log ---
+function addActivityEntry(ev) {
   const d = ev.data || {};
-  const entry = { provider: d.provider || '?', latency: d.latency_ms || 0, status: d.status || 200 };
-  llmLog.unshift(entry);
-  if (llmLog.length > MAX_LLM_LOG) llmLog.pop();
-  renderLlmLog();
+  activityLog.unshift({
+    time: ev.timestamp ? ev.timestamp.split('T')[1]?.replace('Z', '') : '',
+    provider: d.provider || '?',
+    msgs: d.message_count || 0,
+    latency: d.latency_ms || 0,
+    status: d.status || 200,
+    snippet: d.last_user_message || '',
+  });
+  if (activityLog.length > MAX_ACTIVITY) activityLog.pop();
+  renderActivityLog();
 }
 
-function renderLlmLog() {
-  llmLogEl.innerHTML = llmLog.map(e => `
-    <div class="llm-entry">
-      <span class="provider">${esc(e.provider)}</span>
-      <span class="latency">${e.latency}ms</span>
-      <span class="msgs">HTTP ${e.status}</span>
+function renderActivityLog() {
+  if (!activityLog.length) return;
+  activityEl.innerHTML = activityLog.map(e => `
+    <div class="proxy-entry">
+      <span class="proxy-time">${esc(e.time)}</span>
+      <span class="proxy-provider">${esc(e.provider)}</span>
+      <span class="proxy-msgs">${e.msgs} msgs</span>
+      <span class="proxy-snippet">${esc(e.snippet.slice(0, 60))}</span>
+      <span class="proxy-latency ${e.status >= 400 ? 'proxy-status-err' : 'proxy-status-ok'}">${e.latency}ms</span>
     </div>
   `).join('');
-}
-
-// --- Chat ---
-async function sendMessage() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-
-  chatInput.value = '';
-  chatInput.style.height = 'auto';
-  sendBtn.disabled = true;
-
-  appendMessage('user', text);
-  const thinking = appendMessage('thinking', '<span class="thinking-dots"><span>•</span><span>•</span><span>•</span></span>');
-
-  try {
-    const res = await fetch('/chat', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ message: text }),
-    });
-    const data = await res.json();
-    thinking.remove();
-    appendMessage('assistant', data.reply || data.detail || 'No response');
-  } catch (err) {
-    thinking.remove();
-    appendMessage('assistant', `Error: ${err.message}`);
-  } finally {
-    sendBtn.disabled = false;
-    chatInput.focus();
-  }
-}
-
-function appendMessage(role, content) {
-  const msg = document.createElement('div');
-  msg.className = `message ${role}`;
-  if (role === 'thinking') {
-    msg.innerHTML = content;
-  } else {
-    msg.textContent = content;
-  }
-  chatMessages.appendChild(msg);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-  return msg;
 }
 
 // --- Controls ---
 clearBtn.addEventListener('click', () => {
   feed.innerHTML = '<div class="empty-state"><div class="icon">🛡</div><p>Events will appear here</p></div>';
   events = [];
-  llmLog = [];
+  activityLog = [];
   counters.total = 0; counters.injection = 0; counters.blocked = 0; counters.tool_calls = 0;
   countTotal.textContent = '0';
   countThreats.textContent = '0';
   countBlocked.textContent = '0';
   countTools.textContent = '0';
-  llmLogEl.innerHTML = '';
+  activityEl.innerHTML = '<div class="no-activity">No proxy traffic yet</div>';
 });
 
 blockBtn.addEventListener('click', async () => {
   blockMode = !blockMode;
   blockBtn.classList.toggle('active', blockMode);
-  blockBtn.textContent = blockMode ? '🔒 Block ON' : '🔓 Block OFF';
+  blockBtn.textContent = blockMode ? '🔒 Blocking ON' : '🔓 Blocking OFF';
+  if (blockStatus) blockStatus.textContent = blockMode ? 'ON' : 'OFF';
   try {
     await fetch(`/settings/block-injections?enabled=${blockMode}`, { method: 'POST' });
   } catch (e) {
@@ -233,24 +196,9 @@ blockBtn.addEventListener('click', async () => {
   }
 });
 
-sendBtn.addEventListener('click', sendMessage);
-chatInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault();
-    sendMessage();
-  }
-});
-
-// Auto-resize textarea
-chatInput.addEventListener('input', () => {
-  chatInput.style.height = 'auto';
-  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-});
-
 // --- Init ---
 connect();
 
-// Fetch initial stats
 fetch('/stats').then(r => r.json()).then(data => {
   const c = data.counts || {};
   counters.total = c.total || 0;
@@ -262,10 +210,30 @@ fetch('/stats').then(r => r.json()).then(data => {
   countBlocked.textContent = counters.blocked;
   countTools.textContent = counters.tool_calls;
 
-  // Update mode badge
-  const modeBadge = document.getElementById('mode-badge');
-  if (modeBadge) {
-    modeBadge.textContent = data.mode === 'builtin' ? 'Built-in Engine' : 'Proxy Mode';
-    modeBadge.className = `status-badge ${data.mode}`;
+  if (data.block_injections !== undefined) {
+    blockMode = data.block_injections;
+    blockBtn.classList.toggle('active', blockMode);
+    blockBtn.textContent = blockMode ? '🔒 Blocking ON' : '🔓 Blocking OFF';
+    if (blockStatus) blockStatus.textContent = blockMode ? 'ON' : 'OFF';
+  }
+
+  const kernelBadge = document.getElementById('kernel-badge');
+  if (kernelBadge && data.hardening) {
+    const h = data.hardening;
+    if (h.landlock_active) {
+      kernelBadge.textContent = '🔒 Landlock ON';
+      kernelBadge.style.color = 'var(--green)';
+      kernelBadge.style.borderColor = 'var(--green)';
+    } else if (h.seatbelt_active) {
+      kernelBadge.textContent = '🔒 Seatbelt ON';
+      kernelBadge.style.color = 'var(--green)';
+      kernelBadge.style.borderColor = 'var(--green)';
+    } else {
+      const reason = h.landlock_reason || h.seatbelt_reason || 'inactive';
+      kernelBadge.textContent = `⚠ Kernel: ${reason}`;
+      kernelBadge.style.color = 'var(--yellow)';
+      kernelBadge.style.borderColor = 'var(--yellow)';
+    }
+    kernelBadge.title = `Platform: ${h.platform} | no_new_privs: ${h.no_new_privs}`;
   }
 }).catch(() => {});
