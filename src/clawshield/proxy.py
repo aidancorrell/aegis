@@ -18,6 +18,7 @@ import httpx
 from fastapi import APIRouter, Request, Response
 
 from .config import Settings
+from .domain_filter import check_domain
 from .events import SecurityEvent, bus
 from .scanner import scan_messages, scan_text, _CREDENTIAL_PATTERNS
 
@@ -219,6 +220,15 @@ async def _proxy_request(
     else:
         target_url = f"{target_base}{path}"
         query_params = dict(request.query_params)
+
+    # Check domain filter before forwarding
+    allowed, reason = check_domain(target_url, settings)
+    if not allowed:
+        return Response(
+            content=json.dumps({"error": f"ClawShield blocked request: {reason}"}).encode(),
+            status_code=403,
+            media_type="application/json",
+        )
 
     start = time.monotonic()
     async with _make_client() as client:

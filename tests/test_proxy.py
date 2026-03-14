@@ -24,6 +24,9 @@ _settings = SimpleNamespace(
     real_openai_api_key="sk-real-openai-key-12345",
     real_anthropic_api_key="sk-ant-real-key-12345",
     real_gemini_api_key="gemini-real-key-12345",
+    domain_filter_mode="blacklist",
+    domain_whitelist="",
+    domain_blacklist="",
 )
 
 _proxy_router = create_proxy_router(_settings)
