@@ -1,9 +1,11 @@
-"""Setup wizard — generates clawshield.env + agent.env + docker-compose.yml for Mode A."""
+"""Setup wizard — generates aegis.env + agent.env + docker-compose.yml for Mode A."""
 
+import json
 import logging
+import os
 from dataclasses import dataclass, field
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
@@ -40,7 +42,7 @@ AGENT_REGISTRY: dict[str, AgentProfile] = {
     "zeroclaw": AgentProfile(
         image="ghcr.io/zeroclaw/zeroclaw:latest",
         llm_env_vars={"openai": "OPENAI_API_KEY"},
-        proxy_env={"OPENAI_BASE_URL": "http://clawshield:8000/proxy/openai"},
+        proxy_env={"OPENAI_BASE_URL": "http://aegis:8000/proxy/openai"},
         description="Security-focused OpenClaw fork",
         compatibility="✓ Proxy intercept",
     ),
@@ -53,7 +55,7 @@ AGENT_REGISTRY: dict[str, AgentProfile] = {
     ),
 }
 
-_CLAWSHIELD_IP = "172.20.0.10"
+_AEGIS_IP = "172.20.0.10"
 
 
 # --- Request/response models ---
@@ -68,7 +70,7 @@ class ModeAConfig(BaseModel):
 
 
 class WizardResult(BaseModel):
-    clawshield_env: str
+    aegis_env: str
     agent_env: str
     compose_content: str
     launch_command: str
@@ -103,23 +105,23 @@ async def generate(config: ModeAConfig) -> WizardResult:
             extra_hosts=_default_extra_hosts(config.llm_provider),
         )
 
-    # clawshield.env
+    # aegis.env
     cs_env_lines = [
-        f"CLAWSHIELD_REAL_{config.llm_provider.upper()}_API_KEY={config.llm_api_key}",
-        "CLAWSHIELD_BLOCK_INJECTIONS=true",
-        "CLAWSHIELD_AUDIT_LOG_PATH=/mnt/agent-audit/audit.log",
+        f"AEGIS_REAL_{config.llm_provider.upper()}_API_KEY={config.llm_api_key}",
+        "AEGIS_BLOCK_INJECTIONS=true",
+        "AEGIS_AUDIT_LOG_PATH=/mnt/agent-audit/audit.log",
     ]
 
-    # agent.env (dummy keys — real keys stay in ClawShield)
+    # agent.env (dummy keys — real keys stay in Aegis)
     agent_env_lines = []
     for _provider, env_var in profile.llm_env_vars.items():
-        agent_env_lines.append(f"{env_var}=DUMMY_KEY_INTERCEPTED_BY_CLAWSHIELD")
+        agent_env_lines.append(f"{env_var}=DUMMY_KEY_INTERCEPTED_BY_AEGIS")
 
-    # Route SDK calls through ClawShield proxy via env var (no DNS/TLS tricks needed)
+    # Route SDK calls through Aegis proxy via env var (no DNS/TLS tricks needed)
     if config.llm_provider == "anthropic":
-        agent_env_lines.append("ANTHROPIC_BASE_URL=http://clawshield:8000/proxy/anthropic")
+        agent_env_lines.append("ANTHROPIC_BASE_URL=http://aegis:8000/proxy/anthropic")
     elif config.llm_provider == "openai":
-        agent_env_lines.append("OPENAI_BASE_URL=http://clawshield:8000/proxy/openai")
+        agent_env_lines.append("OPENAI_BASE_URL=http://aegis:8000/proxy/openai")
 
     if config.telegram_bot_token:
         agent_env_lines.append(f"MAKO_TELEGRAM_BOT_TOKEN={config.telegram_bot_token}")
@@ -131,11 +133,11 @@ async def generate(config: ModeAConfig) -> WizardResult:
     compose = _generate_compose(profile.image, profile.extra_hosts)
 
     return WizardResult(
-        clawshield_env="\n".join(cs_env_lines),
+        aegis_env="\n".join(cs_env_lines),
         agent_env="\n".join(agent_env_lines),
         compose_content=compose,
         launch_command="docker compose up -d",
-        message=f"Generated two-container stack. Save clawshield.env and agent.env alongside docker-compose.yml, then run: docker compose up -d",
+        message=f"Generated two-container stack. Save aegis.env and agent.env alongside docker-compose.yml, then run: docker compose up -d",
     )
 
 
@@ -149,7 +151,7 @@ class AgentBuilderConfig(BaseModel):
 
 
 class AgentBuilderResult(BaseModel):
-    clawshield_env: str
+    aegis_env: str
     agent_config: str
     compose_content: str
     launch_command: str
@@ -186,15 +188,15 @@ async def generate_agent_builder(config: AgentBuilderConfig) -> AgentBuilderResu
     }
 
     cs_env_lines = [
-        f"CLAWSHIELD_REAL_{config.provider.upper()}_API_KEY={config.api_key}",
-        "CLAWSHIELD_BLOCK_INJECTIONS=true",
-        "CLAWSHIELD_AUDIT_LOG_PATH=/mnt/agent-audit/audit.log",
+        f"AEGIS_REAL_{config.provider.upper()}_API_KEY={config.api_key}",
+        "AEGIS_BLOCK_INJECTIONS=true",
+        "AEGIS_AUDIT_LOG_PATH=/mnt/agent-audit/audit.log",
     ]
 
     compose = _generate_agent_builder_compose(config.provider)
 
     return AgentBuilderResult(
-        clawshield_env="\n".join(cs_env_lines),
+        aegis_env="\n".join(cs_env_lines),
         agent_config=json.dumps(agent_config, indent=2),
         compose_content=compose,
         launch_command="docker compose up -d",
@@ -204,16 +206,16 @@ async def generate_agent_builder(config: AgentBuilderConfig) -> AgentBuilderResu
 def _generate_agent_builder_compose(provider: str) -> str:
     proxy_env = ""
     if provider == "anthropic":
-        proxy_env = '      - ANTHROPIC_BASE_URL=http://clawshield:8000/proxy/anthropic\n'
+        proxy_env = '      - ANTHROPIC_BASE_URL=http://aegis:8000/proxy/anthropic\n'
     elif provider == "openai":
-        proxy_env = '      - OPENAI_BASE_URL=http://clawshield:8000/proxy/openai\n'
+        proxy_env = '      - OPENAI_BASE_URL=http://aegis:8000/proxy/openai\n'
 
     return f"""services:
-  clawshield:
-    image: ghcr.io/clawshield/clawshield:latest
+  aegis:
+    image: ghcr.io/aegis/aegis:latest
     ports:
       - "8000:8000"
-    env_file: clawshield.env
+    env_file: aegis.env
     volumes:
       - agent-audit:/mnt/agent-audit:ro
       - agent-workspace:/mnt/agent-workspace:ro
@@ -228,10 +230,10 @@ def _generate_agent_builder_compose(provider: str) -> str:
     mem_limit: 256m
     networks:
       clawnet:
-        ipv4_address: {_CLAWSHIELD_IP}
+        ipv4_address: {_AEGIS_IP}
 
   agent:
-    image: ghcr.io/clawshield/clawshield-agent:latest
+    image: ghcr.io/aegis/aegis-agent:latest
     environment:
 {proxy_env}      - AGENT_CONFIG_PATH=/app/agent_config.json
     volumes:
@@ -250,7 +252,7 @@ def _generate_agent_builder_compose(provider: str) -> str:
     networks:
       - clawnet
     depends_on:
-      - clawshield
+      - aegis
 
 networks:
   clawnet:
@@ -263,6 +265,65 @@ volumes:
   agent-audit:
   agent-workspace:
 """
+
+
+class LaunchRequest(BaseModel):
+    agent_config: dict
+    llm_provider: str = "anthropic"
+    api_key: str = ""
+
+
+@router.post("/agent-builder/launch")
+async def launch_agent(req: LaunchRequest) -> dict:
+    """Start the aegis-agent container via Docker socket."""
+    try:
+        import docker as docker_sdk
+        client = docker_sdk.from_env()
+    except Exception as e:
+        raise HTTPException(status_code=503, detail=f"Docker socket unavailable: {e}")
+
+    # Stop + remove any existing agent instance
+    try:
+        old = client.containers.get("aegis-agent-builder")
+        old.stop(timeout=5)
+        old.remove()
+    except Exception:
+        pass
+
+    # Determine proxy env var for provider
+    proxy_env: dict[str, str] = {}
+    if req.llm_provider == "anthropic":
+        proxy_env["ANTHROPIC_BASE_URL"] = "http://aegis:8000/proxy/anthropic"
+        proxy_env["ANTHROPIC_API_KEY"] = "DUMMY_KEY_INTERCEPTED_BY_AEGIS"
+    elif req.llm_provider == "openai":
+        proxy_env["OPENAI_BASE_URL"] = "http://aegis:8000/proxy/openai"
+        proxy_env["OPENAI_API_KEY"] = "DUMMY_KEY_INTERCEPTED_BY_AEGIS"
+
+    # Detect compose project name for volume references
+    project = os.getenv("COMPOSE_PROJECT_NAME", "aegis")
+
+    try:
+        container = client.containers.run(
+            "aegis-agent:latest",
+            name="aegis-agent-builder",
+            detach=True,
+            environment={
+                "AGENT_CONFIG_JSON": json.dumps(req.agent_config),
+                **proxy_env,
+            },
+            volumes={
+                f"{project}_agent-audit": {"bind": "/app/audit", "mode": "rw"},
+                f"{project}_agent-workspace": {"bind": "/app/workspace", "mode": "rw"},
+            },
+            network=f"{project}_clawnet",
+            restart_policy={"Name": "unless-stopped"},
+            cap_drop=["ALL"],
+            security_opt=["no-new-privileges:true"],
+            mem_limit="256m",
+        )
+        return {"status": "started", "container_id": container.short_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/validate-key")
@@ -280,13 +341,13 @@ async def validate_key(provider: str, api_key: str) -> dict:
 # --- Compose generator ---
 
 def _generate_compose(agent_image: str, extra_hosts: list[str]) -> str:
-    hosts_yaml = "\n".join(f'      - "{h}:{_CLAWSHIELD_IP}"' for h in extra_hosts)
+    hosts_yaml = "\n".join(f'      - "{h}:{_AEGIS_IP}"' for h in extra_hosts)
     return f"""services:
-  clawshield:
-    image: ghcr.io/clawshield/clawshield:latest
+  aegis:
+    image: ghcr.io/aegis/aegis:latest
     ports:
       - "8000:8000"
-    env_file: clawshield.env
+    env_file: aegis.env
     volumes:
       - agent-audit:/mnt/agent-audit:ro
       - agent-workspace:/mnt/agent-workspace:ro
@@ -302,7 +363,7 @@ def _generate_compose(agent_image: str, extra_hosts: list[str]) -> str:
     mem_limit: 256m
     networks:
       clawnet:
-        ipv4_address: {_CLAWSHIELD_IP}
+        ipv4_address: {_AEGIS_IP}
 
   agent:
     image: {agent_image}
@@ -324,7 +385,7 @@ def _generate_compose(agent_image: str, extra_hosts: list[str]) -> str:
     networks:
       - clawnet
     depends_on:
-      - clawshield
+      - aegis
 
 networks:
   clawnet:

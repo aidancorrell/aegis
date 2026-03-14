@@ -248,7 +248,7 @@ function ConnectAgentWizard({ onBack }: { onBack: () => void }) {
             <Card>
               <h2 className="text-[17px] font-bold mb-1">Choose Agent</h2>
               <p className="text-[13px] text-muted mb-5">
-                Select the OpenClaw-compatible agent ClawShield will wrap
+                Select the OpenClaw-compatible agent Aegis will wrap
               </p>
               <div className="space-y-2">
                 {agents.map((a) => (
@@ -277,7 +277,7 @@ function ConnectAgentWizard({ onBack }: { onBack: () => void }) {
             <Card>
               <h2 className="text-[17px] font-bold mb-1">API Keys</h2>
               <p className="text-[13px] text-muted mb-5">
-                Stored in <span className="font-mono text-blue">clawshield.env</span> only — never
+                Stored in <span className="font-mono text-blue">aegis.env</span> only — never
                 inside the agent container.
               </p>
               <div className="space-y-4">
@@ -352,7 +352,7 @@ function ConnectAgentWizard({ onBack }: { onBack: () => void }) {
                     ✓ Configuration generated
                   </div>
                   {[
-                    ['clawshield.env', result.clawshield_env, 'cs-env'],
+                    ['aegis.env', result.aegis_env, 'cs-env'],
                     ['agent.env', result.agent_env, 'agent-env'],
                     ['docker-compose.yml', result.compose_content, 'compose'],
                   ].map(([label, content, id]) => (
@@ -450,7 +450,8 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
   async function generate() {
     setLoading(true)
     try {
-      const res = await fetch('/wizard/agent-builder/generate', {
+      // Step 1: generate config
+      const genRes = await fetch('/wizard/agent-builder/generate', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -462,9 +463,33 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
           telegram_bot_token: telegramToken,
         }),
       })
-      setResult(await res.json())
-    } catch {
-      setResult({ error: 'Failed to generate config' })
+      const generated = await genRes.json()
+      if (generated.error) { setResult(generated); return }
+
+      // Step 2: launch the agent container
+      const agentConfig = JSON.parse(generated.agent_config)
+      const launchRes = await fetch('/wizard/agent-builder/launch', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ agent_config: agentConfig, llm_provider: provider, api_key: apiKey }),
+      })
+      if (!launchRes.ok) {
+        const err = await launchRes.json()
+        setResult({ error: err.detail ?? 'Failed to launch agent' })
+        return
+      }
+
+      // Step 3: poll until agent is healthy
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 2000))
+        try {
+          const health = await fetch('/agent-chat/health')
+          if (health.ok) { window.location.href = '/'; return }
+        } catch { /* still starting */ }
+      }
+      setResult({ error: 'Agent took too long to start — check Docker logs' })
+    } catch (e) {
+      setResult({ error: String(e) })
     } finally {
       setLoading(false)
     }
@@ -511,7 +536,7 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
                     rows={3}
                     className="w-full bg-bg border border-border rounded-lg px-3 py-2.5 text-[14px] text-text placeholder:text-muted outline-none focus:border-blue transition-colors font-sans resize-none"
                   />
-                  <Hint>ClawShield generates the system prompt automatically. A security preamble is always prepended — your agent will never follow instructions embedded in web content.</Hint>
+                  <Hint>Aegis generates the system prompt automatically. A security preamble is always prepended — your agent will never follow instructions embedded in web content.</Hint>
                 </div>
               </div>
             </Card>
@@ -559,7 +584,7 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
                   onChange={setApiKey}
                 />
                 <Hint>
-                  Stored securely in clawshield.env. Think of this like a password that lets your agent use the AI service — it's never shared.
+                  Stored securely in aegis.env. Think of this like a password that lets your agent use the AI service — it's never shared.
                 </Hint>
               </div>
             </Card>
@@ -652,7 +677,15 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
                 Save these files and run the command to start your agent.
               </p>
               {loading && (
-                <div className="text-center py-10 text-muted text-sm">Building your agent…</div>
+                <div className="flex flex-col items-center gap-3 py-10">
+                  <motion.div
+                    className="w-10 h-10 rounded-full border-2 border-blue border-t-transparent"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  />
+                  <p className="text-muted text-sm">Launching your agent…</p>
+                  <p className="text-muted/60 text-xs">This takes a few seconds</p>
+                </div>
               )}
               {result && !result.error && (
                 <div className="space-y-4">
@@ -660,7 +693,7 @@ function BuildAgentWizard({ onBack }: { onBack: () => void }) {
                     ✓ Your agent is ready
                   </div>
                   {[
-                    ['clawshield.env', result.clawshield_env, 'ab-cs-env'],
+                    ['aegis.env', result.aegis_env, 'ab-cs-env'],
                     ['agent_config.json', result.agent_config, 'ab-config'],
                     ['docker-compose.yml', result.compose_content, 'ab-compose'],
                   ].map(([label, content, id]) => (
@@ -718,7 +751,7 @@ export function Wizard() {
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
       <div className="text-center mb-10">
         <Shield className="w-12 h-12 text-blue mx-auto mb-4" strokeWidth={1.5} />
-        <h1 className="text-2xl font-bold text-text">ClawShield Setup</h1>
+        <h1 className="text-2xl font-bold text-text">Aegis Setup</h1>
         <p className="text-muted text-[14px] mt-2">
           Secure AI assistant platform — up and running in minutes
         </p>
@@ -735,7 +768,7 @@ export function Wizard() {
           <div>
             <div className="font-bold text-[15px] text-text">Connect an Agent</div>
             <div className="text-[13px] text-muted mt-1">
-              Wrap Mako, ZeroClaw, or any OpenClaw-compatible agent with ClawShield's security layer.
+              Wrap Mako, ZeroClaw, or any OpenClaw-compatible agent with Aegis's security layer.
             </div>
           </div>
           <div className="flex items-center gap-1 text-blue text-[12px] font-medium mt-auto">
@@ -753,7 +786,7 @@ export function Wizard() {
           <div>
             <div className="font-bold text-[15px] text-text">Build My Agent</div>
             <div className="text-[13px] text-muted mt-1">
-              No setup required. Answer a few questions and ClawShield builds and secures your agent.
+              No setup required. Answer a few questions and Aegis builds and secures your agent.
             </div>
           </div>
           <div className="flex items-center gap-1 text-purple text-[12px] font-medium mt-auto">

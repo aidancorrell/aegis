@@ -8,7 +8,7 @@ interface Message {
   ts: string
 }
 
-const AGENT_URL = '/agent-chat'  // proxied by ClawShield to agent:8001
+const AGENT_URL = '/agent-chat'  // proxied by Aegis to agent:8001
 
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])

@@ -2,7 +2,7 @@
 
 import pytest
 
-from clawshield.scanner import scan_text, scan_messages, ScanResult
+from aegis.scanner import scan_text, scan_messages, ScanResult
 
 
 # ---------------------------------------------------------------------------
@@ -117,8 +117,8 @@ class TestCredentialDetection:
         assert not result.has_credential
 
     def test_dummy_key_not_flagged(self):
-        # The dummy key ClawShield uses doesn't match sk- pattern (it's a long phrase)
-        result = scan_text("DUMMY_KEY_INTERCEPTED_BY_CLAWSHIELD")
+        # The dummy key Aegis uses doesn't match sk- pattern (it's a long phrase)
+        result = scan_text("DUMMY_KEY_INTERCEPTED_BY_AEGIS")
         assert not result.has_credential
 
 

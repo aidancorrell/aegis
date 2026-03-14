@@ -1,4 +1,4 @@
-// ClawShield Dashboard — SSE client, event rendering, proxy activity log
+// Aegis Dashboard — SSE client, event rendering, proxy activity log
 
 const MAX_EVENTS = 200;
 const MAX_ACTIVITY = 50;

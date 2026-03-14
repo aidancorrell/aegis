@@ -56,7 +56,7 @@ export function Header({ connected, stats, blockMode, onToggleBlock }: Props) {
             />
           </div>
           <div>
-            <span className="font-bold text-[15px] text-text tracking-tight">ClawShield</span>
+            <span className="font-bold text-[15px] text-text tracking-tight">Aegis</span>
             <div className="flex items-center gap-1.5 mt-0">
               <span
                 className={`text-[10px] font-medium ${connected ? 'text-green' : 'text-red'}`}
