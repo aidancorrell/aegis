@@ -1,7 +1,7 @@
-"""Unit tests for clawshield.config."""
+"""Unit tests for aegis.config."""
 
 import pytest
-from clawshield.config import Settings
+from aegis.config import Settings
 
 
 class TestSettingsDefaults:
@@ -30,16 +30,16 @@ class TestSettingsDefaults:
 
 class TestSettingsEnvOverride:
     def test_block_injections_env_false(self, monkeypatch):
-        monkeypatch.setenv("CLAWSHIELD_BLOCK_INJECTIONS", "false")
+        monkeypatch.setenv("AEGIS_BLOCK_INJECTIONS", "false")
         s = Settings(_env_file=None)
         assert s.block_injections is False
 
     def test_port_env_override(self, monkeypatch):
-        monkeypatch.setenv("CLAWSHIELD_PORT", "9090")
+        monkeypatch.setenv("AEGIS_PORT", "9090")
         s = Settings(_env_file=None)
         assert s.port == 9090
 
     def test_api_key_env_override(self, monkeypatch):
-        monkeypatch.setenv("CLAWSHIELD_REAL_ANTHROPIC_API_KEY", "sk-ant-test123")
+        monkeypatch.setenv("AEGIS_REAL_ANTHROPIC_API_KEY", "sk-ant-test123")
         s = Settings(_env_file=None)
         assert s.real_anthropic_api_key == "sk-ant-test123"

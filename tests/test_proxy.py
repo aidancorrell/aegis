@@ -1,4 +1,4 @@
-"""Unit tests for clawshield.proxy — request handling, response scanning helpers,
+"""Unit tests for aegis.proxy — request handling, response scanning helpers,
 and end-to-end response scan behaviour."""
 
 import json
@@ -11,9 +11,9 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport
 
-from clawshield.events import SecurityEventBus
-from clawshield.proxy import _extract_response_text, _redact_credentials, create_proxy_router
-from clawshield.scanner import scan_text, ScanResult
+from aegis.events import SecurityEventBus
+from aegis.proxy import _extract_response_text, _redact_credentials, create_proxy_router
+from aegis.scanner import scan_text, ScanResult
 
 # ---------------------------------------------------------------------------
 # Shared test settings
@@ -227,8 +227,8 @@ class TestResponseScanIntegration:
     """Test the response-scan behaviour in _proxy_request by mocking the HTTP client."""
 
     def _build_app(self, mock_response_body: dict, monkeypatch):
-        import clawshield.proxy as proxy_module
-        from clawshield.config import Settings
+        import aegis.proxy as proxy_module
+        from aegis.config import Settings
 
         fresh_bus = SecurityEventBus()
         monkeypatch.setattr(proxy_module, "bus", fresh_bus)
@@ -308,8 +308,8 @@ class TestResponseScanIntegration:
         assert injection in resp.text
 
     def test_non_json_response_skips_scan(self, monkeypatch):
-        import clawshield.proxy as proxy_module
-        from clawshield.config import Settings
+        import aegis.proxy as proxy_module
+        from aegis.config import Settings
 
         fresh_bus = SecurityEventBus()
         monkeypatch.setattr(proxy_module, "bus", fresh_bus)
@@ -383,8 +383,8 @@ class TestProxyCleanRequest:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -402,8 +402,8 @@ class TestProxyCleanRequest:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -420,8 +420,8 @@ class TestProxyCleanRequest:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client(status=200)
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -441,8 +441,8 @@ class TestProxyHeaderHandling:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -462,8 +462,8 @@ class TestProxyHeaderHandling:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -482,8 +482,8 @@ class TestProxyHeaderHandling:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -518,8 +518,8 @@ class TestProxyInjectionBlocking:
         mock_client = make_mock_client()
         try:
             with (
-                patch("clawshield.proxy._make_client", return_value=mock_client),
-                patch("clawshield.proxy.bus", test_bus),
+                patch("aegis.proxy._make_client", return_value=mock_client),
+                patch("aegis.proxy.bus", test_bus),
             ):
                 async with httpx.AsyncClient(
                     transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -542,8 +542,8 @@ class TestProxyInjectionBlocking:
         mock_client = make_mock_client()
         try:
             with (
-                patch("clawshield.proxy._make_client", return_value=mock_client),
-                patch("clawshield.proxy.bus", test_bus),
+                patch("aegis.proxy._make_client", return_value=mock_client),
+                patch("aegis.proxy.bus", test_bus),
             ):
                 async with httpx.AsyncClient(
                     transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -565,8 +565,8 @@ class TestProxyInjectionBlocking:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
@@ -585,8 +585,8 @@ class TestProxyInjectionBlocking:
         test_bus = SecurityEventBus()
         mock_client = make_mock_client()
         with (
-            patch("clawshield.proxy._make_client", return_value=mock_client),
-            patch("clawshield.proxy.bus", test_bus),
+            patch("aegis.proxy._make_client", return_value=mock_client),
+            patch("aegis.proxy.bus", test_bus),
         ):
             async with httpx.AsyncClient(
                 transport=ASGITransport(app=proxy_app), base_url="http://test"
