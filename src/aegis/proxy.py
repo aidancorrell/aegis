@@ -1,7 +1,7 @@
 """LLM API Proxy — transparent interception for OpenAI, Anthropic, and Gemini.
 
 When an agent container has extra_hosts DNS override pointing these providers to
-ClawShield's IP, all LLM calls land here. ClawShield:
+Aegis's IP, all LLM calls land here. Aegis:
   1. Emits LLM_REQUEST event
   2. Scans messages for injection patterns
   3. Strips the agent's dummy API key, injects the real key
@@ -179,12 +179,12 @@ async def _proxy_request(
             if role == "tool" and isinstance(content, str):
                 for pattern_group in hits:
                     if pattern_group.has_injection:
-                        msg["content"] = "[BLOCKED: prompt injection detected by ClawShield]"
+                        msg["content"] = "[BLOCKED: prompt injection detected by Aegis]"
                         break
             elif role == "user" and isinstance(content, list):
                 for block in content:
                     if isinstance(block, dict) and block.get("type") == "tool_result":
-                        block["content"] = "[BLOCKED: prompt injection detected by ClawShield]"
+                        block["content"] = "[BLOCKED: prompt injection detected by Aegis]"
 
         body["messages"] = messages
         body_bytes = json.dumps(body).encode()
@@ -225,7 +225,7 @@ async def _proxy_request(
     allowed, reason = check_domain(target_url, settings)
     if not allowed:
         return Response(
-            content=json.dumps({"error": f"ClawShield blocked request: {reason}"}).encode(),
+            content=json.dumps({"error": f"Aegis blocked request: {reason}"}).encode(),
             status_code=403,
             media_type="application/json",
         )
