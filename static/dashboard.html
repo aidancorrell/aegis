@@ -5,6 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ClawShield Dashboard</title>
   <link rel="stylesheet" href="/static/style.css">
+  <style>
+    /* Proxy activity log */
+    .activity-panel {
+      flex: 1;
+      overflow: auto;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+    .proxy-entry {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 7px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+    }
+    .proxy-entry:last-child { border-bottom: none; }
+    .proxy-time { color: var(--text-muted); font-size: 10px; white-space: nowrap; }
+    .proxy-provider { font-weight: 700; min-width: 70px; }
+    .proxy-msgs { color: var(--text-muted); min-width: 55px; }
+    .proxy-latency { color: var(--text-muted); min-width: 55px; text-align: right; }
+    .proxy-snippet { color: var(--text); flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .proxy-status-ok { color: var(--green); }
+    .proxy-status-err { color: var(--red); }
+    .no-activity { color: var(--text-muted); font-size: 12px; padding: 20px 12px; }
+
+    /* Settings bar below activity */
+    .settings-bar {
+      border-top: 1px solid var(--border);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: var(--bg-panel);
+      font-size: 12px;
+    }
+    .settings-bar label { color: var(--text-muted); }
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .audit-path { color: var(--text-muted); font-size: 11px; font-family: monospace; margin-left: auto; }
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -37,7 +83,8 @@
     </div>
 
     <div class="header-actions">
-      <button id="block-btn" class="btn danger" title="Toggle injection blocking">🔓 Block OFF</button>
+      <span id="kernel-badge" class="status-badge" title="Kernel hardening status" style="font-size:11px">⏳ Kernel</span>
+      <button id="block-btn" class="btn danger active" title="Toggle injection blocking">🔒 Blocking ON</button>
       <button id="clear-btn" class="btn" title="Clear event feed">Clear</button>
       <a href="/wizard-page" class="btn primary" style="text-decoration:none">Setup Wizard</a>
     </div>
@@ -53,48 +100,42 @@
       <div class="empty-state">
         <div class="icon">🛡</div>
         <p>Waiting for events…</p>
-        <p style="margin-top:8px">Send a message in the chat to see activity</p>
+        <p style="margin-top:8px">Activity from the Mako agent will appear here</p>
       </div>
     </div>
   </section>
 
-  <!-- Right panel: Status + Chat + LLM log -->
+  <!-- Right panel: Proxy activity -->
   <section class="panel-right">
 
     <!-- Status bar -->
     <div class="status-bar">
-      <span>Mode:</span>
-      <span id="mode-badge" class="status-badge builtin">Built-in Engine</span>
-      <span style="margin-left:auto;font-size:11px">
-        Send a message with "fetch https://..." to trigger injection scanning
+      <span>Agent:</span>
+      <span class="status-badge builtin">Mako</span>
+      <span style="margin-left:8px">Mode:</span>
+      <span class="status-badge">Proxy Intercept</span>
+      <span style="margin-left:auto;font-size:11px;color:var(--text-muted)">
+        LLM traffic intercepted · audit log tailed
       </span>
     </div>
 
-    <!-- Chat panel -->
-    <div class="chat-panel">
-      <div id="chat-messages" class="chat-messages">
-        <div class="message assistant">
-          👋 Hi! I'm your ClawShield-protected agent. Try asking me to fetch a URL, read a file, or just chat. Watch the security events panel on the left as I work.
-        </div>
-      </div>
-
-      <div class="chat-input-row">
-        <textarea
-          id="chat-input"
-          class="chat-input"
-          placeholder="Send a message… (Enter to send, Shift+Enter for newline)"
-          rows="1"
-        ></textarea>
-        <button id="send-btn" class="send-btn">Send</button>
-      </div>
+    <!-- Proxy activity log -->
+    <div class="panel-title" style="padding:10px 14px 8px;border-bottom:1px solid var(--border)">
+      <span>Proxy Activity</span>
+      <span style="font-size:10px;font-weight:400">LLM requests through ClawShield</span>
     </div>
 
-    <!-- LLM request log -->
-    <div class="llm-log">
-      <div class="llm-log-title">LLM Request Log</div>
-      <div id="llm-log-entries">
-        <div style="color:var(--text-muted);font-size:11px">No requests yet</div>
-      </div>
+    <div id="activity-log" class="activity-panel">
+      <div class="no-activity">No proxy traffic yet — start the Mako agent to see LLM requests here</div>
+    </div>
+
+    <!-- Settings bar -->
+    <div class="settings-bar">
+      <span class="settings-toggle">
+        <label>Injection blocking:</label>
+        <strong id="block-status">ON</strong>
+      </span>
+      <span id="audit-path-display" class="audit-path">/mnt/agent-audit/audit.log</span>
     </div>
 
   </section>

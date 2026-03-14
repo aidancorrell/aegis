@@ -9,7 +9,7 @@
     body { overflow: auto; }
 
     .wizard-container {
-      max-width: 680px;
+      max-width: 640px;
       margin: 0 auto;
       padding: 40px 20px;
     }
@@ -19,18 +19,9 @@
       margin-bottom: 40px;
     }
 
-    .wizard-header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
+    .wizard-header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .wizard-header p { color: var(--text-muted); font-size: 15px; }
 
-    .wizard-header p {
-      color: var(--text-muted);
-      font-size: 15px;
-    }
-
-    /* Step indicator */
     .step-indicator {
       display: flex;
       justify-content: center;
@@ -46,22 +37,14 @@
       color: var(--text-muted);
       display: flex; align-items: center; justify-content: center;
       font-size: 13px; font-weight: 700;
-      position: relative;
-      z-index: 1;
+      position: relative; z-index: 1;
     }
-
     .step-dot.active { border-color: var(--blue); color: var(--blue); background: rgba(88,166,255,0.1); }
     .step-dot.done { border-color: var(--green); background: var(--green); color: #fff; }
 
-    .step-line {
-      width: 48px; height: 2px;
-      background: var(--border);
-      align-self: center;
-      margin: 0 -4px;
-    }
+    .step-line { width: 60px; height: 2px; background: var(--border); align-self: center; margin: 0 -4px; }
     .step-line.done { background: var(--green); }
 
-    /* Cards */
     .wizard-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -69,49 +52,10 @@
       padding: 28px;
       margin-bottom: 16px;
     }
+    .wizard-card h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .wizard-card .subtitle { color: var(--text-muted); font-size: 13px; margin-bottom: 24px; }
 
-    .wizard-card h2 {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-
-    .wizard-card .subtitle {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-bottom: 24px;
-    }
-
-    /* Mode selection */
-    .mode-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
-
-    .mode-card {
-      background: var(--surface2);
-      border: 2px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px;
-      cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
-      text-align: center;
-    }
-
-    .mode-card:hover { border-color: var(--blue); }
-    .mode-card.selected { border-color: var(--blue); background: rgba(88,166,255,0.08); }
-
-    .mode-card .icon { font-size: 32px; margin-bottom: 8px; }
-    .mode-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .mode-card p { font-size: 12px; color: var(--text-muted); }
-
-    /* Agent selection */
-    .agent-grid {
-      display: grid;
-      gap: 8px;
-    }
-
+    .agent-grid { display: grid; gap: 8px; }
     .agent-card {
       background: var(--surface2);
       border: 2px solid var(--border);
@@ -123,39 +67,15 @@
       gap: 12px;
       transition: border-color 0.15s;
     }
-
     .agent-card:hover { border-color: var(--blue); }
     .agent-card.selected { border-color: var(--blue); background: rgba(88,166,255,0.08); }
+    .agent-card .compat { margin-left: auto; font-size: 11px; color: var(--green); }
 
-    .agent-card .compat {
-      margin-left: auto;
-      font-size: 11px;
-      color: var(--green);
-    }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+    .form-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
 
-    /* Form elements */
-    .form-group {
-      margin-bottom: 18px;
-    }
-
-    .form-label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: var(--text);
-    }
-
-    .form-hint {
-      font-size: 11px;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    input[type="text"],
-    input[type="password"],
-    select,
-    textarea.form-textarea {
+    input[type="text"], input[type="password"], select {
       width: 100%;
       background: var(--surface2);
       border: 1px solid var(--border);
@@ -165,39 +85,21 @@
       font-size: 14px;
       outline: none;
       font-family: inherit;
+      box-sizing: border-box;
     }
+    input:focus, select:focus { border-color: var(--blue); }
 
-    input:focus, select:focus, textarea:focus { border-color: var(--blue); }
-
-    textarea.form-textarea { resize: vertical; min-height: 100px; }
-
-    /* Tool checkboxes */
-    .tool-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .tool-checkbox {
-      background: var(--surface2);
-      border: 1px solid var(--border);
+    .info-box {
+      background: rgba(88,166,255,0.08);
+      border: 1px solid var(--blue);
       border-radius: var(--radius);
-      padding: 10px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: border-color 0.15s;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
     }
+    .info-box strong { color: var(--text); }
 
-    .tool-checkbox:hover { border-color: var(--blue); }
-    .tool-checkbox.checked { border-color: var(--green); background: rgba(63,185,80,0.08); }
-
-    .tool-checkbox input { display: none; }
-    .tool-checkbox .check { width: 16px; height: 16px; border: 2px solid var(--border); border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-    .tool-checkbox.checked .check { border-color: var(--green); background: var(--green); color: #fff; }
-
-    /* Navigation */
     .wizard-nav {
       display: flex;
       justify-content: space-between;
@@ -205,7 +107,6 @@
       margin-top: 24px;
     }
 
-    /* Output area */
     .output-block {
       background: var(--bg);
       border: 1px solid var(--border);
@@ -216,27 +117,29 @@
       white-space: pre-wrap;
       word-break: break-all;
       color: var(--green);
-      max-height: 220px;
+      max-height: 200px;
       overflow-y: auto;
       margin-top: 8px;
     }
 
-    .copy-btn {
-      font-size: 11px;
-      padding: 3px 8px;
-      float: right;
-      margin-top: -2px;
+    .output-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0;
     }
 
+    .copy-btn { font-size: 11px; padding: 3px 8px; }
+
     .success-banner {
-      background: rgba(63, 185, 80, 0.1);
+      background: rgba(63,185,80,0.1);
       border: 1px solid var(--green);
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 14px;
       color: var(--green);
       text-align: center;
       font-weight: 600;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .alert {
@@ -249,7 +152,6 @@
       margin-top: 12px;
     }
 
-    /* Step visibility */
     .step { display: none; }
     .step.active { display: block; }
   </style>
@@ -260,11 +162,11 @@
   <div class="wizard-header">
     <div style="font-size:48px;margin-bottom:12px">🛡</div>
     <h1>ClawShield Setup</h1>
-    <p>Secure and deploy any OpenClaw-compatible agent in minutes</p>
+    <p>Wrap Mako with security and real-time monitoring in minutes</p>
   </div>
 
-  <!-- Step indicator -->
-  <div class="step-indicator" id="step-indicator">
+  <!-- Step indicator: 4 steps -->
+  <div class="step-indicator">
     <div class="step-dot active" id="dot-1">1</div>
     <div class="step-line" id="line-1-2"></div>
     <div class="step-dot" id="dot-2">2</div>
@@ -272,27 +174,16 @@
     <div class="step-dot" id="dot-3">3</div>
     <div class="step-line" id="line-3-4"></div>
     <div class="step-dot" id="dot-4">4</div>
-    <div class="step-line" id="line-4-5"></div>
-    <div class="step-dot" id="dot-5">5</div>
   </div>
 
-  <!-- Step 1: Choose mode -->
+  <!-- Step 1: Choose agent -->
   <div class="step active" id="step-1">
     <div class="wizard-card">
-      <h2>Choose your setup</h2>
-      <p class="subtitle">How do you want to use ClawShield?</p>
+      <h2>Choose agent</h2>
+      <p class="subtitle">Select the OpenClaw-compatible agent ClawShield will wrap</p>
 
-      <div class="mode-grid">
-        <div class="mode-card selected" id="mode-a-card" onclick="selectMode('a')">
-          <div class="icon">🤖</div>
-          <h3>Wrap an Agent</h3>
-          <p>Add security to Mako, ZeroClaw, OpenClaw, or any compatible agent. No source changes required.</p>
-        </div>
-        <div class="mode-card" id="mode-b-card" onclick="selectMode('b')">
-          <div class="icon">🔧</div>
-          <h3>Build Your Own</h3>
-          <p>Use ClawShield's built-in agent engine. Choose LLM, tools, and personality. Single container.</p>
-        </div>
+      <div class="agent-grid" id="agent-list">
+        <!-- populated by JS -->
       </div>
     </div>
 
@@ -302,68 +193,21 @@
     </div>
   </div>
 
-  <!-- Step 2a: Choose agent (Mode A) -->
-  <div class="step" id="step-2a">
-    <div class="wizard-card">
-      <h2>Choose agent</h2>
-      <p class="subtitle">Select the agent image ClawShield will wrap</p>
-
-      <div class="agent-grid" id="agent-list">
-        <!-- populated by JS -->
-      </div>
-    </div>
-
-    <div class="wizard-nav">
-      <button class="btn" onclick="prevStep()">← Back</button>
-      <button class="btn primary" onclick="nextStep()">Next →</button>
-    </div>
-  </div>
-
-  <!-- Step 2b: LLM provider (Mode B) -->
-  <div class="step" id="step-2b">
-    <div class="wizard-card">
-      <h2>LLM Provider</h2>
-      <p class="subtitle">Which AI provider should power your agent?</p>
-
-      <div class="form-group">
-        <label class="form-label">Provider</label>
-        <select id="b-provider" onchange="updateModelHint()">
-          <option value="gemini">Google Gemini</option>
-          <option value="anthropic">Anthropic Claude</option>
-          <option value="openai">OpenAI</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">API Key</label>
-        <input type="password" id="b-api-key" placeholder="Enter your API key">
-        <div class="form-hint" id="b-key-hint">e.g. AIza... for Gemini</div>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Model (optional)</label>
-        <input type="text" id="b-model" placeholder="">
-        <div class="form-hint" id="b-model-hint">Leave blank for default</div>
-      </div>
-    </div>
-
-    <div class="wizard-nav">
-      <button class="btn" onclick="prevStep()">← Back</button>
-      <button class="btn primary" onclick="nextStep()">Next →</button>
-    </div>
-  </div>
-
-  <!-- Step 3a: API keys (Mode A) -->
-  <div class="step" id="step-3a">
+  <!-- Step 2: API Keys -->
+  <div class="step" id="step-2">
     <div class="wizard-card">
       <h2>API Keys</h2>
-      <p class="subtitle">Enter your real API keys. These are stored only in clawshield.env — never passed to the agent.</p>
+      <p class="subtitle">Your real API keys are stored only in clawshield.env — never inside the agent container.</p>
+
+      <div class="info-box">
+        <strong>How it works:</strong> ClawShield intercepts the agent's LLM calls via DNS override. The agent gets a dummy key; ClawShield substitutes the real one before forwarding to the provider.
+      </div>
 
       <div class="form-group">
         <label class="form-label">LLM Provider</label>
         <select id="a-provider">
-          <option value="gemini">Google Gemini</option>
           <option value="anthropic">Anthropic Claude</option>
+          <option value="gemini">Google Gemini</option>
           <option value="openai">OpenAI</option>
         </select>
       </div>
@@ -371,7 +215,7 @@
       <div class="form-group">
         <label class="form-label">API Key</label>
         <input type="password" id="a-api-key" placeholder="Paste your API key here">
-        <div class="form-hint">ClawShield holds this key. The agent gets a dummy key intercepted by the proxy.</div>
+        <div class="form-hint">Stored in clawshield.env on the host. Never touches the agent container.</div>
       </div>
     </div>
 
@@ -381,77 +225,11 @@
     </div>
   </div>
 
-  <!-- Step 3b: Personality + tools (Mode B) -->
-  <div class="step" id="step-3b">
+  <!-- Step 3: Channels -->
+  <div class="step" id="step-3">
     <div class="wizard-card">
-      <h2>Personality &amp; Tools</h2>
-      <p class="subtitle">Define what your agent does and what it can access</p>
-
-      <div class="form-group">
-        <label class="form-label">System Prompt</label>
-        <textarea class="form-textarea" id="b-system-prompt" placeholder="You are a helpful assistant...">You are a helpful assistant with access to the web and files.</textarea>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label">Available Tools</label>
-        <div class="tool-grid" id="tool-grid">
-          <label class="tool-checkbox checked" id="tool-web_fetch">
-            <input type="checkbox" value="web_fetch" checked>
-            <div class="check">✓</div>
-            <div>
-              <div style="font-weight:600;font-size:13px">Web Fetch</div>
-              <div style="font-size:11px;color:var(--text-muted)">HTTPS-only, SSRF-protected</div>
-            </div>
-          </label>
-          <label class="tool-checkbox" id="tool-read_file">
-            <input type="checkbox" value="read_file">
-            <div class="check"></div>
-            <div>
-              <div style="font-weight:600;font-size:13px">Read File</div>
-              <div style="font-size:11px;color:var(--text-muted)">Workspace-scoped</div>
-            </div>
-          </label>
-          <label class="tool-checkbox" id="tool-write_file">
-            <input type="checkbox" value="write_file">
-            <div class="check"></div>
-            <div>
-              <div style="font-weight:600;font-size:13px">Write File</div>
-              <div style="font-size:11px;color:var(--text-muted)">Workspace-scoped</div>
-            </div>
-          </label>
-          <label class="tool-checkbox" id="tool-shell">
-            <input type="checkbox" value="shell">
-            <div class="check"></div>
-            <div>
-              <div style="font-weight:600;font-size:13px">Shell</div>
-              <div style="font-size:11px;color:var(--text-muted)">Allowlisted commands only</div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="form-group" id="shell-cmds-group" style="display:none">
-        <label class="form-label">Allowed Shell Commands</label>
-        <input type="text" id="b-allowed-commands" placeholder="e.g. git, python, date">
-        <div class="form-hint">Comma-separated command names</div>
-      </div>
-    </div>
-
-    <div class="wizard-nav">
-      <button class="btn" onclick="prevStep()">← Back</button>
-      <button class="btn primary" onclick="nextStep()">Next →</button>
-    </div>
-  </div>
-
-  <!-- Step 4: Channels (both modes) -->
-  <div class="step" id="step-4">
-    <div class="wizard-card">
-      <h2>Channels</h2>
-      <p class="subtitle">Web chat is always enabled. Optionally add bot channels.</p>
-
-      <div style="background:var(--surface2);border:1px solid var(--green);border-radius:var(--radius);padding:12px;margin-bottom:16px;color:var(--green);font-size:13px">
-        ✓ Web chat — always on at <strong>http://localhost:8000</strong>
-      </div>
+      <h2>Bot Channels</h2>
+      <p class="subtitle">The ClawShield dashboard is always at http://localhost:8000. Optionally add Telegram or Discord.</p>
 
       <div class="form-group">
         <label class="form-label">Telegram Bot Token <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
@@ -471,11 +249,11 @@
     </div>
   </div>
 
-  <!-- Step 5: Review + Launch -->
-  <div class="step" id="step-5">
+  <!-- Step 4: Review + Launch -->
+  <div class="step" id="step-4">
     <div class="wizard-card">
       <h2>Review &amp; Launch</h2>
-      <p class="subtitle">Generated configuration files. Save these and run the launch command.</p>
+      <p class="subtitle">Save these files alongside docker-compose.yml, then run the launch command.</p>
 
       <div id="launch-result">
         <div style="color:var(--text-muted);text-align:center;padding:20px">Generating configuration…</div>
@@ -491,40 +269,22 @@
 </div>
 
 <script>
-// --- State ---
-let mode = 'a'; // 'a' or 'b'
 let currentStep = 1;
+const TOTAL_STEPS = 4;
 let selectedAgent = 'mako';
-const TOTAL_STEPS = 5;
-
-// Step flow per mode
-// Mode A: 1 → 2a → 3a → 4 → 5
-// Mode B: 1 → 2b → 3b → 4 → 5
-function stepId() {
-  if (currentStep === 1) return 'step-1';
-  if (currentStep === 2) return mode === 'a' ? 'step-2a' : 'step-2b';
-  if (currentStep === 3) return mode === 'a' ? 'step-3a' : 'step-3b';
-  if (currentStep === 4) return 'step-4';
-  if (currentStep === 5) return 'step-5';
-}
 
 function showStep(n) {
-  // Hide all
   document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
   currentStep = n;
-  document.getElementById(stepId())?.classList.add('active');
-  updateStepDots();
-  if (n === 5) generateConfig();
+  document.getElementById(`step-${n}`)?.classList.add('active');
+  updateDots();
+  if (n === TOTAL_STEPS) generateConfig();
 }
 
-function nextStep() {
-  if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
-}
-function prevStep() {
-  if (currentStep > 1) showStep(currentStep - 1);
-}
+function nextStep() { if (currentStep < TOTAL_STEPS) showStep(currentStep + 1); }
+function prevStep() { if (currentStep > 1) showStep(currentStep - 1); }
 
-function updateStepDots() {
+function updateDots() {
   for (let i = 1; i <= TOTAL_STEPS; i++) {
     const dot = document.getElementById(`dot-${i}`);
     if (!dot) continue;
@@ -536,30 +296,24 @@ function updateStepDots() {
   }
 }
 
-function selectMode(m) {
-  mode = m;
-  document.getElementById('mode-a-card').classList.toggle('selected', m === 'a');
-  document.getElementById('mode-b-card').classList.toggle('selected', m === 'b');
-}
-
 // --- Agent list ---
 async function loadAgents() {
   try {
     const res = await fetch('/wizard/agents');
     const data = await res.json();
     const grid = document.getElementById('agent-list');
-    grid.innerHTML = data.agents.filter(a => a.name !== 'builtin').map(a => `
+    grid.innerHTML = data.agents.map(a => `
       <div class="agent-card ${a.name === 'mako' ? 'selected' : ''}" id="agent-${a.name}" onclick="selectAgent('${a.name}')">
         <div>
           <div style="font-weight:700;font-size:14px">${a.name.charAt(0).toUpperCase() + a.name.slice(1)}</div>
-          <div style="font-size:12px;color:var(--text-muted)">${a.image || 'custom'}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${a.image || ''}</div>
           <div style="font-size:12px;color:var(--text-muted)">${a.description}</div>
         </div>
         <span class="compat">${a.compatibility}</span>
       </div>
     `).join('');
   } catch (e) {
-    console.error('Failed to load agents', e);
+    document.getElementById('agent-list').innerHTML = '<div style="color:var(--red)">Failed to load agents</div>';
   }
 }
 loadAgents();
@@ -570,72 +324,21 @@ function selectAgent(name) {
   document.getElementById(`agent-${name}`)?.classList.add('selected');
 }
 
-// --- Tool checkboxes ---
-document.querySelectorAll('.tool-checkbox').forEach(label => {
-  label.addEventListener('click', () => {
-    const cb = label.querySelector('input');
-    cb.checked = !cb.checked;
-    label.classList.toggle('checked', cb.checked);
-    const check = label.querySelector('.check');
-    check.textContent = cb.checked ? '✓' : '';
-
-    // Show shell commands input if shell is selected
-    const shellGroup = document.getElementById('shell-cmds-group');
-    const shellChecked = document.querySelector('#tool-shell input')?.checked;
-    if (shellGroup) shellGroup.style.display = shellChecked ? '' : 'none';
-  });
-});
-
-// --- Provider hints ---
-const providerHints = {
-  gemini: { key: 'e.g. AIza...', model: 'gemini-2.5-flash' },
-  anthropic: { key: 'e.g. sk-ant-...', model: 'claude-haiku-4-5-20251001' },
-  openai: { key: 'e.g. sk-...', model: 'gpt-4o-mini' },
-};
-
-function updateModelHint() {
-  const p = document.getElementById('b-provider')?.value;
-  const h = providerHints[p] || {};
-  const hint = document.getElementById('b-model-hint');
-  const keyHint = document.getElementById('b-key-hint');
-  if (hint) hint.textContent = `Default: ${h.model || ''}`;
-  if (keyHint) keyHint.textContent = h.key || '';
-}
-updateModelHint();
-
 // --- Generate config ---
 async function generateConfig() {
   const el = document.getElementById('launch-result');
   el.innerHTML = '<div style="color:var(--text-muted);text-align:center;padding:20px">Generating…</div>';
 
   try {
-    let body, endpoint;
+    const body = {
+      agent_name: selectedAgent,
+      llm_provider: document.getElementById('a-provider')?.value || 'anthropic',
+      llm_api_key: document.getElementById('a-api-key')?.value || 'CHANGEME',
+      telegram_bot_token: document.getElementById('telegram-token')?.value || '',
+      discord_bot_token: document.getElementById('discord-token')?.value || '',
+    };
 
-    if (mode === 'a') {
-      endpoint = '/wizard/generate/mode-a';
-      body = {
-        agent_name: selectedAgent,
-        llm_provider: document.getElementById('a-provider')?.value || 'gemini',
-        llm_api_key: document.getElementById('a-api-key')?.value || 'CHANGEME',
-        telegram_bot_token: document.getElementById('telegram-token')?.value || '',
-        discord_bot_token: document.getElementById('discord-token')?.value || '',
-      };
-    } else {
-      endpoint = '/wizard/generate/mode-b';
-      const tools = Array.from(document.querySelectorAll('.tool-checkbox input:checked')).map(i => i.value);
-      const cmdsRaw = document.getElementById('b-allowed-commands')?.value || '';
-      body = {
-        llm_provider: document.getElementById('b-provider')?.value || 'gemini',
-        llm_api_key: document.getElementById('b-api-key')?.value || 'CHANGEME',
-        llm_model: document.getElementById('b-model')?.value || '',
-        system_prompt: document.getElementById('b-system-prompt')?.value || 'You are a helpful assistant.',
-        tools: tools,
-        allowed_commands: cmdsRaw.split(',').map(s => s.trim()).filter(Boolean),
-        telegram_bot_token: document.getElementById('telegram-token')?.value || '',
-      };
-    }
-
-    const res = await fetch(endpoint, {
+    const res = await fetch('/wizard/generate', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(body),
@@ -644,48 +347,20 @@ async function generateConfig() {
 
     let html = `<div class="success-banner">✓ Configuration generated!</div>`;
 
-    html += `
-      <div class="form-group">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <label class="form-label">clawshield.env</label>
-          <button class="btn copy-btn" onclick="copyText('env-output')">Copy</button>
-        </div>
-        <div class="output-block" id="env-output">${esc(data.env_content)}</div>
-      </div>
-    `;
-
-    if (data.agent_config) {
-      html += `
-        <div class="form-group">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <label class="form-label">agent_config.json</label>
-            <button class="btn copy-btn" onclick="copyText('config-output')">Copy</button>
-          </div>
-          <div class="output-block" id="config-output">${esc(JSON.stringify(data.agent_config, null, 2))}</div>
-        </div>
-      `;
-    }
+    html += outputBlock('clawshield.env', 'cs-env', data.clawshield_env);
+    html += outputBlock('agent.env', 'agent-env', data.agent_env);
+    html += outputBlock('docker-compose.yml', 'compose', data.compose_content);
 
     html += `
-      <div class="form-group">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <label class="form-label">docker-compose.yml</label>
-          <button class="btn copy-btn" onclick="copyText('compose-output')">Copy</button>
-        </div>
-        <div class="output-block" id="compose-output">${esc(data.compose_content)}</div>
-      </div>
-    `;
-
-    if (data.message) {
-      html += `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text-muted);white-space:pre-wrap">${esc(data.message)}</div>`;
-    }
-
-    html += `
-      <div class="form-group">
+      <div class="form-group" style="margin-top:16px">
         <label class="form-label">Launch command</label>
         <div class="output-block">${esc(data.launch_command)}</div>
       </div>
     `;
+
+    if (data.message) {
+      html += `<div style="font-size:12px;color:var(--text-muted);margin-top:12px;white-space:pre-wrap">${esc(data.message)}</div>`;
+    }
 
     el.innerHTML = html;
   } catch (err) {
@@ -693,20 +368,28 @@ async function generateConfig() {
   }
 }
 
-function esc(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+function outputBlock(label, id, content) {
+  return `
+    <div class="form-group">
+      <div class="output-label-row">
+        <label class="form-label">${esc(label)}</label>
+        <button class="btn copy-btn" onclick="copyId('${id}')">Copy</button>
+      </div>
+      <div class="output-block" id="${id}">${esc(content)}</div>
+    </div>
+  `;
 }
 
-function copyText(id) {
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function copyId(id) {
   const el = document.getElementById(id);
   if (!el) return;
   navigator.clipboard.writeText(el.textContent).then(() => {
-    const orig = event.target.textContent;
     event.target.textContent = 'Copied!';
-    setTimeout(() => { event.target.textContent = orig; }, 1500);
+    setTimeout(() => { event.target.textContent = 'Copy'; }, 1500);
   });
 }
 </script>

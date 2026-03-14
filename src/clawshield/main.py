@@ -10,10 +10,9 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
-from .chat import init_engine, router as chat_router
 from .config import load_settings
-from .engine import load_agent_config
 from .events import SecurityEvent, bus
+from . import hardening
 from .log_adapter import tail_audit_log
 from .proxy import create_proxy_router
 from .wizard import router as wizard_router
@@ -26,7 +25,6 @@ app = FastAPI(title="ClawShield", version="1.0.0", docs_url=None, redoc_url=None
 settings = load_settings()
 
 # Mount routers
-app.include_router(chat_router)
 app.include_router(wizard_router)
 app.include_router(create_proxy_router(settings))
 
@@ -38,20 +36,18 @@ if _static_dir.exists():
 
 @app.on_event("startup")
 async def startup() -> None:
-    logger.info("ClawShield starting — mode=%s", settings.mode)
+    logger.info("ClawShield starting — mode=proxy (Mako)")
 
-    # Initialize built-in engine if in builtin mode
-    if settings.mode == "builtin":
-        config = load_agent_config(settings.agent_config_path)
-        init_engine(config)
+    # Apply kernel-level hardening (Landlock on Linux/Docker, Seatbelt on macOS native)
+    hardening.status = hardening.apply("/tmp", "/tmp")
 
-    # Start audit log tailer in proxy mode (or always — it's a no-op if file doesn't exist)
+    # Tail Mako's audit log from shared volume
     asyncio.create_task(tail_audit_log(settings.audit_log_path))
 
     bus.emit(SecurityEvent(
         type="LLM_REQUEST",
         severity="info",
-        data={"note": "ClawShield started", "mode": settings.mode},
+        data={"note": "ClawShield started", "mode": "proxy"},
     ))
 
 
@@ -78,13 +74,12 @@ async def events(request: Request) -> StreamingResponse:
     """SSE endpoint — streams SecurityEvents to all connected dashboard tabs."""
 
     async def generate():
-        # Send initial ping
-        yield f"data: {json.dumps({'type': 'PING', 'severity': 'info', 'data': {}, 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})}\n\n"
+        yield f"data: {json.dumps({'type': 'PING', 'severity': 'info', 'data': {}, 'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())})}\\n\\n"
         async for event in bus.subscribe():
             if await request.is_disconnected():
                 break
             from dataclasses import asdict
-            yield f"data: {json.dumps(asdict(event))}\n\n"
+            yield f"data: {json.dumps(asdict(event))}\\n\\n"
 
     return StreamingResponse(
         generate(),
@@ -99,12 +94,20 @@ async def events(request: Request) -> StreamingResponse:
 
 @app.get("/stats")
 async def stats() -> dict:
+    from dataclasses import asdict
     return {
         "counts": bus.counts,
-        "mode": settings.mode,
+        "mode": "proxy",
         "block_injections": settings.block_injections,
+        "hardening": asdict(hardening.status),
         "uptime_hint": "check /events for live data",
     }
+
+
+@app.get("/hardening")
+async def hardening_status() -> dict:
+    from dataclasses import asdict
+    return asdict(hardening.status)
 
 
 @app.post("/settings/block-injections")
