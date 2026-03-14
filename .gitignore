@@ -16,3 +16,5 @@ audit/
 workspace/
 data/
 frontend/node_modules/
+.claude/worktrees
+.claude/settings.local.json

@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     # Security behavior
     block_injections: bool = True
 
+    # Domain filter
+    domain_filter_mode: str = "blacklist"  # "blacklist" or "whitelist"
+    domain_whitelist: str = ""  # comma-separated domains
+    domain_blacklist: str = ""  # comma-separated domains
+
     # Audit log path (shared volume from Mako container)
     audit_log_path: str = "/mnt/agent-audit/audit.log"
 
