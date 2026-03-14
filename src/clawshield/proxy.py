@@ -19,7 +19,7 @@ from fastapi import APIRouter, Request, Response
 
 from .config import Settings
 from .events import SecurityEvent, bus
-from .scanner import scan_messages
+from .scanner import scan_messages, scan_text, _CREDENTIAL_PATTERNS
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +33,78 @@ _GEMINI_BASE = "https://generativelanguage.googleapis.com"
 # Headers to strip when forwarding (hop-by-hop + auth)
 _STRIP_HEADERS = {"host", "content-length", "transfer-encoding", "authorization",
                   "x-goog-api-key", "connection", "keep-alive"}
+
+
+def _extract_response_text(body: dict) -> str:
+    """Extract all text content from an LLM response body in a provider-agnostic way.
+
+    Handles the known shapes for OpenAI, Anthropic, and Gemini, then falls back
+    to recursively collecting all string values from the JSON tree.
+    """
+    parts: list[str] = []
+
+    # OpenAI / OpenAI-compatible: choices[].message.content / choices[].delta.content
+    for choice in body.get("choices", []):
+        msg = choice.get("message") or choice.get("delta") or {}
+        content = msg.get("content")
+        if isinstance(content, str):
+            parts.append(content)
+        elif isinstance(content, list):
+            for block in content:
+                if isinstance(block, dict) and block.get("type") == "text":
+                    parts.append(block.get("text", ""))
+
+    # Anthropic: content[].text
+    for block in body.get("content", []):
+        if isinstance(block, dict) and block.get("type") == "text":
+            parts.append(block.get("text", ""))
+
+    # Gemini: candidates[].content.parts[].text
+    for candidate in body.get("candidates", []):
+        content = candidate.get("content", {})
+        for part in content.get("parts", []):
+            if isinstance(part, dict) and "text" in part:
+                parts.append(part["text"])
+
+    if parts:
+        return "\n".join(parts)
+
+    # Fallback: recursively collect all string values from the JSON tree
+    def _collect_strings(obj: object) -> list[str]:
+        if isinstance(obj, str):
+            return [obj]
+        if isinstance(obj, list):
+            result = []
+            for item in obj:
+                result.extend(_collect_strings(item))
+            return result
+        if isinstance(obj, dict):
+            result = []
+            for v in obj.values():
+                result.extend(_collect_strings(v))
+            return result
+        return []
+
+    return "\n".join(_collect_strings(body))
+
+
+def _redact_credentials(content: bytes, hits: list) -> bytes:
+    """Replace credential pattern matches in raw response bytes with [REDACTED].
+
+    ``hits`` is a list of ScanResult objects whose ``matched_patterns`` entries
+    look like ``"credential:<prefix>..."``.  We re-run the credential regexes
+    against the decoded text so we can replace the full matched value.
+    """
+    try:
+        text = content.decode("utf-8", errors="replace")
+    except Exception:
+        return content
+
+    redacted = text
+    for pattern in _CREDENTIAL_PATTERNS:
+        redacted = pattern.sub("[REDACTED]", redacted)
+
+    return redacted.encode("utf-8")
 
 
 def _make_client() -> httpx.AsyncClient:
@@ -169,7 +241,7 @@ async def _proxy_request(
         },
     ))
 
-    # Check response for credential leaks
+    # Check request-side credential leaks (tool results containing credentials)
     if cred_found:
         bus.emit(SecurityEvent(
             type="CREDENTIAL_LEAK",
@@ -177,8 +249,43 @@ async def _proxy_request(
             data={"provider": provider, "note": "potential credential in tool result"},
         ))
 
+    # Scan response body for credential leaks and injection patterns
+    response_content = resp.content
+    try:
+        resp_body = json.loads(response_content)
+        resp_text = _extract_response_text(resp_body)
+    except Exception:
+        resp_text = ""
+
+    if resp_text:
+        resp_scan = scan_text(resp_text)
+
+        if resp_scan.has_credential:
+            bus.emit(SecurityEvent(
+                type="RESPONSE_CREDENTIAL_LEAK",
+                severity="critical",
+                data={
+                    "provider": provider,
+                    "patterns": resp_scan.matched_patterns,
+                    "snippet": resp_scan.snippet[:300],
+                },
+            ))
+            response_content = _redact_credentials(response_content, [resp_scan])
+
+        if resp_scan.has_injection:
+            bus.emit(SecurityEvent(
+                type="RESPONSE_INJECTION_DETECTED",
+                severity="high",
+                data={
+                    "provider": provider,
+                    "patterns": resp_scan.matched_patterns,
+                    "snippet": resp_scan.snippet[:300],
+                },
+            ))
+            # Do not block or modify — log only
+
     return Response(
-        content=resp.content,
+        content=response_content,
         status_code=resp.status_code,
         headers={k: v for k, v in resp.headers.items()
                  if k.lower() not in {"content-encoding", "transfer-encoding"}},
