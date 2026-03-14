@@ -8,6 +8,8 @@ services:
       - "8000:8000"
     env_file:
       - clawshield.env
+    environment:
+      - PYTHONPATH=/app/src
     volumes:
       - ./src:/app/src
       - ./static:/app/static
