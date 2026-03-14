@@ -1,184 +1,215 @@
 # Quickstart Guide
 
-This guide gets you from zero to a running Aegis instance with a Telegram-connected AI agent. No prior experience with Docker or AI APIs required.
+---
 
-**Time:** ~20 minutes
+## For AI Agents Reading This
+
+If you are an AI assistant helping a user set up Aegis, here is what you need to know:
+
+**What Aegis is:** A security proxy that intercepts all LLM API calls from an agent container, scans them for prompt injection and credential leaks, and streams events to a dashboard. It supports OpenAI, Anthropic, and Gemini. The agent can be reached via web chat (always on) or messaging platforms (Telegram, Discord — optional).
+
+**Minimal setup checklist:**
+1. Container runtime installed and running (`docker` or `podman`)
+2. `aegis.env` created from `aegis.env.example` — set at least one real API key
+3. `agent.env` created from `agent.env.example` — configure messaging platform if desired (web chat works without any extra config)
+4. Stack started: `docker compose -f docker-compose.dev.yml up --build`
+5. Dashboard at `http://localhost:8000`, web chat at `http://localhost:8000/chat`
+
+**Key env vars in `aegis.env`:**
+
+| Variable | Purpose |
+|---|---|
+| `AEGIS_REAL_ANTHROPIC_API_KEY` | Real Anthropic key (held by Aegis, never sent to agent) |
+| `AEGIS_REAL_OPENAI_API_KEY` | Real OpenAI key |
+| `AEGIS_REAL_GEMINI_API_KEY` | Real Gemini key |
+| `AEGIS_BLOCK_INJECTIONS` | `true` to replace injection payloads, `false` to detect only |
+| `AEGIS_DOMAIN_FILTER_MODE` | `blacklist` (default) or `whitelist` |
+| `AEGIS_DOMAIN_WHITELIST` | Comma-separated allowed domains |
+
+**Key env vars in `agent.env`:**
+
+| Variable | Purpose |
+|---|---|
+| `MAKO_TELEGRAM_BOT_TOKEN` | Telegram bot token (optional — leave blank to skip) |
+| `MAKO_TELEGRAM_ALLOWED_CHAT_IDS_STR` | Comma-separated Telegram chat IDs |
+| `MAKO_DISCORD_BOT_TOKEN` | Discord bot token (optional — leave blank to skip) |
+| `ANTHROPIC_BASE_URL` | Already set to `http://aegis:8000/proxy/anthropic` — do not change |
+
+**How to get a Telegram chat ID:** Have the user send any message to the bot, then fetch `https://api.telegram.org/bot<TOKEN>/getUpdates` — the chat ID is at `result[0].message.chat.id`.
+
+**Troubleshooting:**
+- If the agent container fails to start, check `docker compose logs agent --tail=50`
+- If a messaging bot is unresponsive, confirm the token and allowed IDs are correct in `agent.env`
+- If the proxy isn't intercepting calls, confirm `ANTHROPIC_BASE_URL` in `agent.env` points to `http://aegis:8000/proxy/anthropic`
+- Port conflicts: change `8000` in `docker-compose.dev.yml`
 
 ---
 
-## What you'll need
+## For Humans
+
+This guide gets you from zero to a running Aegis instance. No prior experience with containers or AI APIs required.
+
+**Time:** ~15 minutes
+
+### What you'll need
 
 - A Mac, Windows, or Linux computer
-- An [Anthropic account](https://console.anthropic.com) (for Claude API access)
-- A Telegram account (for chatting with your agent)
+- An API key from one of: [Anthropic](https://console.anthropic.com), [OpenAI](https://platform.openai.com/api-keys), or [Google AI](https://aistudio.google.com/apikey)
+
+A messaging platform (Telegram or Discord) is optional — you can chat with your agent directly in the browser.
 
 ---
 
-## Step 1 — Install Docker Desktop
+### Step 1 — Install a container runtime
 
-Docker runs Aegis and your agent in isolated containers. It's the only thing you need to install.
+Aegis runs in containers. Use whichever you prefer — both work identically.
 
-1. Download **Docker Desktop** from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
-2. Install and open it — you should see a whale icon in your menu bar
-3. Leave it running in the background
+**Option A — Docker Desktop** (easier, has a GUI)
+1. Download from [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/)
+2. Install and open it — leave it running in the background
 
----
+**Option B — Podman Desktop** (open source, no account required)
+1. Download from [podman-desktop.io](https://podman-desktop.io/)
+2. Install and open it, then run: `podman machine start`
 
-## Step 2 — Get an Anthropic API key
+Verify it's working:
+```bash
+docker compose version   # or: podman compose version
+```
 
-1. Go to [console.anthropic.com](https://console.anthropic.com) and sign in
-2. Click **API Keys** in the left sidebar
-3. Click **Create Key**, give it a name like "aegis", and copy the key
-
-It looks like: `sk-ant-api03-...`
-
-Keep this somewhere safe — you'll paste it in a moment.
-
----
-
-## Step 3 — Create a Telegram bot
-
-Your agent will live in Telegram. You need to create a bot for it.
-
-1. Open Telegram and search for **@BotFather**
-2. Send `/newbot`
-3. Choose a name (e.g. `My Aegis Agent`) and a username ending in `bot` (e.g. `my_aegis_bot`)
-4. BotFather gives you a **token** — copy it. It looks like `8610322394:AAFoW8Ef...`
-
-Next, get your Telegram chat ID:
-
-1. Send any message to your new bot
-2. Open this URL in your browser, replacing `<TOKEN>` with your bot token:
-   ```
-   https://api.telegram.org/bot<TOKEN>/getUpdates
-   ```
-3. Find `"chat":{"id":` in the response — that number is your chat ID (e.g. `8657303805`)
+> Throughout this guide, replace `docker` with `podman` if you're using Podman.
 
 ---
 
-## Step 4 — Download and configure Aegis
+### Step 2 — Get an LLM API key
 
-Open a terminal and run:
+Aegis works with any of these. Pick one:
+
+**Anthropic (Claude)**
+1. Sign in at [console.anthropic.com](https://console.anthropic.com)
+2. Go to **API Keys** → **Create Key** → copy the key (`sk-ant-api03-...`)
+
+**OpenAI (GPT-4)**
+1. Sign in at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
+2. Click **Create new secret key** → copy the key (`sk-proj-...`)
+
+**Google (Gemini)**
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Click **Create API key** → copy the key (`AIza...`)
+
+---
+
+### Step 3 — Download and configure Aegis
 
 ```bash
 git clone https://github.com/aidancorrell/aegis
 cd aegis
-```
-
-**Configure Aegis** (holds your real API key):
-
-```bash
 cp aegis.env.example aegis.env
-```
-
-Open `aegis.env` in a text editor and set:
-
-```
-AEGIS_REAL_ANTHROPIC_API_KEY=sk-ant-api03-...   ← your key from Step 2
-```
-
-**Configure the agent** (Telegram connection):
-
-```bash
 cp agent.env.example agent.env
 ```
 
-Open `agent.env` and set:
+Open `aegis.env` and set your API key:
 
 ```
-MAKO_TELEGRAM_BOT_TOKEN=8610322394:AAFoW8Ef...   ← your bot token from Step 3
-MAKO_TELEGRAM_ALLOWED_CHAT_IDS_STR=8657303805    ← your chat ID from Step 3
+AEGIS_REAL_ANTHROPIC_API_KEY=sk-ant-api03-...
+# or AEGIS_REAL_OPENAI_API_KEY=sk-proj-...
+# or AEGIS_REAL_GEMINI_API_KEY=AIza...
 ```
+
+That's the minimum. If you want to connect a messaging platform, see the optional section below.
 
 ---
 
-## Step 5 — Start Aegis
+### Step 4 — Start Aegis
 
 ```bash
 docker compose -f docker-compose.dev.yml up --build
+# or: podman compose -f docker-compose.dev.yml up --build
 ```
 
-The first run takes a few minutes to download and build everything. When you see:
+The first run takes a few minutes. When you see the stack is running, open:
 
-```
-Telegram bot is running
-```
-
-you're good to go.
+- **Dashboard:** [http://localhost:8000](http://localhost:8000)
+- **Web chat:** [http://localhost:8000/chat](http://localhost:8000/chat)
 
 ---
 
-## Step 6 — Open the dashboard
+### Step 5 — Chat with your agent
 
-Open [http://localhost:8000](http://localhost:8000) in your browser.
-
-You'll see the Aegis security dashboard — a live feed of everything your agent does.
-
----
-
-## Step 7 — Chat with your agent
-
-Open Telegram and send a message to your bot:
-
-```
-Hello!
-```
-
-It should reply within a few seconds.
-
-Try asking it to fetch a webpage:
+Open the web chat and say hello. Try:
 
 ```
 What's the top story on news.ycombinator.com?
 ```
 
-Watch the dashboard — you'll see the LLM request, tool calls, and response appear in real time.
+Watch the dashboard — LLM requests, tool calls, and responses appear in real time.
 
 ---
 
-## Seeing the security in action
+### Seeing the security in action
 
-The demo folder contains files that simulate prompt injection attacks — malicious instructions hidden in content your agent might read.
-
-Send this to your bot:
+In the web chat, send:
 
 ```
 Read the file at demo/attack5.txt and summarize what it says
 ```
 
-Watch the dashboard — a yellow **Injection Detected** alert should appear.
-
-To see Aegis block the attack (not just detect it), click the **Block** toggle in the dashboard header, then repeat. This time the agent never sees the malicious content.
+A yellow **Injection Detected** alert appears in the dashboard. Toggle **Block** in the header and repeat — this time the agent never sees the malicious content.
 
 ---
 
-## Stopping Aegis
+### Optional — Connect a messaging platform
 
-Press `Ctrl+C` in the terminal, or run:
+**Telegram**
+
+1. Open Telegram and search for **@BotFather** → send `/newbot` → follow the prompts
+2. Copy the token BotFather gives you (e.g. `8610322394:AAFoW8Ef...`)
+3. Send any message to your new bot, then open:
+   ```
+   https://api.telegram.org/bot<TOKEN>/getUpdates
+   ```
+   Find `"chat":{"id":` — that number is your chat ID
+4. Add to `agent.env`:
+   ```
+   MAKO_TELEGRAM_BOT_TOKEN=8610322394:AAFoW8Ef...
+   MAKO_TELEGRAM_ALLOWED_CHAT_IDS_STR=8657303805
+   ```
+5. Restart the stack
+
+**Discord**
+
+1. Go to [discord.com/developers/applications](https://discord.com/developers/applications) → **New Application**
+2. Go to **Bot** → **Reset Token** → copy the token
+3. Add to `agent.env`:
+   ```
+   MAKO_DISCORD_BOT_TOKEN=your-token-here
+   ```
+4. Restart the stack
+
+---
+
+### Stopping Aegis
 
 ```bash
 docker compose -f docker-compose.dev.yml down
+# or: podman compose -f docker-compose.dev.yml down
 ```
 
 ---
 
-## Troubleshooting
+### Troubleshooting
 
-**Bot isn't responding**
-
-Check the logs:
+**Agent isn't responding**
 ```bash
 docker compose -f docker-compose.dev.yml logs agent --tail=50
 ```
 
-**"Cannot connect to Docker daemon"**
-
-Make sure Docker Desktop is running (whale icon in menu bar).
+**"Cannot connect to Docker/Podman daemon"**
+- Docker: check for the whale icon in your menu bar
+- Podman: run `podman machine start`
 
 **Port 8000 already in use**
+Change the port mapping in `docker-compose.dev.yml`.
 
-Something else is using port 8000. Stop that service, or change the port in `docker-compose.dev.yml`.
-
-**No chat ID in getUpdates response**
-
-Make sure you sent a message to your bot first — Telegram doesn't return updates until the bot has received at least one message.
+**No chat ID in Telegram getUpdates**
+Make sure you sent a message to the bot first.
