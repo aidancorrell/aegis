@@ -1,5 +1,7 @@
 # Aegis 🛡
 
+> **Prototype / Hackathon Project** — Aegis is an early-stage proof of concept built at a hackathon. It is not production-ready. Do not rely on it as your sole security control. See [TODO.md](TODO.md) for known limitations.
+
 **Real-time security layer for AI agents — catches and blocks prompt injection attacks before they reach the LLM.**
 
 Aegis sits between your AI agent and the internet. Every LLM call passes through it, every tool result gets scanned, and every attack attempt shows up live on a dashboard. If a malicious webpage tries to hijack your agent mid-task ([ClawJacked](https://www.wired.com/story/claude-claude-mcp-prompt-injection/)), Aegis catches it before the LLM ever sees it.
